@@ -48,8 +48,8 @@ def multiple_video2frames( video_path, output_path , ignore_prev_vid=False, prev
     Args:
     video_path (str): path to folder containing all videos
     output_path (str): path to output folder for storing extracted frames
-    prev_vid_file (str): path to text file containing previously extracted video filenames
     ignore_prev_vid (bool): whether to ignore previous vidoes that have been already extracted
+    prev_vid_file (str): path to text file containing previously extracted video filenames
 
     """
 
@@ -64,7 +64,7 @@ def multiple_video2frames( video_path, output_path , ignore_prev_vid=False, prev
     for video in list_videos:
         # skip video if extracted before
         if ignore_prev_vid and video in prev_vids:
-                continue
+            continue
         # read and extract frame
         video_file = video_path + '/' + video
         video2frames(video_file, output_path)
