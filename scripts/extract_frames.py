@@ -53,6 +53,8 @@ def multiple_video2frames( video_path, output_path , ignore_prev_vid=False, prev
 
     """
 
+    vid_count = 0
+
     if ignore_prev_vid:
         file = open(prev_vid_file)
         text = file.readlines()
@@ -61,16 +63,22 @@ def multiple_video2frames( video_path, output_path , ignore_prev_vid=False, prev
         file = open(prev_vid_file, 'a+')
 
     list_videos = os.listdir(video_path)
+    print('Found {} videos'.format(len(list_videos)))
     for video in list_videos:
         # skip video if extracted before
         if ignore_prev_vid and video in prev_vids:
             continue
         # read and extract frame
+        vid_count += 1
+        print('Extracting Video {}'.format(vid_count))
         video_file = video_path + '/' + video
         video2frames(video_file, output_path)
         # add video name to ignore_prev_vid file
         if ignore_prev_vid:
             file.write(video + '\n')
+
+    if vid_count > 0: 
+        print('Extraction Completed!')
             
     return
 
