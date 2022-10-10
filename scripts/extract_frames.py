@@ -14,13 +14,14 @@ parser.add_argument("-i", "--ignore_prev_vid", type=bool, default=False, help="W
 
 args = vars(parser.parse_args())
 
-def video2frames( video_file, output_path ):
+def video2frames( video_file, output_path, factor=1 ):
 
     """Extract frames from a video file
     
     Args:
     video_file (str): path to the video
     output_path (str): path to output folder for storing extracted frames
+    factor (int): how many seconds to extract 1 frame. 1 = extract a frame every sec, 2 = extract a frame every 2 secs
 
     """
 
@@ -33,15 +34,16 @@ def video2frames( video_file, output_path ):
         success, img = vid.read()
         if success:
             index += 1
-            # extract every fps frame of the video
-            if index % fps == 0:
+            # extract every fps frame of the video, multplied by a factor
+            # factor of 1 = extract a frame every sec, 2 = extract a frame every 2 secs
+            if index % (fps*factor) == 0:
                 cv2.imwrite(output_path + '/' + str(uuid.uuid4()) + '_' + str(index) + '.jpg', img)
         else:
             break
     vid.release()
     return
 
-def multiple_video2frames( video_path, output_path , ignore_prev_vid=False, prev_vid_file=None):
+def multiple_video2frames( video_path, output_path , ignore_prev_vid=False, prev_vid_file=None ):
 
     """Extract frames from multple videos file
     
