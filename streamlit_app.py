@@ -14,13 +14,13 @@ MODEL_INPUT_SIZE = (640, 640)  # width, height
 NUM_CLASSES = 3
 CONF_THRESHOLD = 0.1
 NMS_THRESHOLD = 0.1
-# BBOX_VIDEO_NAME = "bbox_video"
 
 ##STEP 1 Load Model
-session, input_name, output_name = load_model(MODEL_PATH)
+with st.spinner(text="Loading Model ... Please be patient!"):
+    session, input_name, output_name = load_model(MODEL_PATH)
 
 ##STEP 2 Upload Video
-st.write("# 2. Upload raw diving video:\n")
+st.write("# 1. Upload raw diving video:\n")
 
 # create temp dir for storing video and outputs
 temp_dir = tempfile.TemporaryDirectory()
