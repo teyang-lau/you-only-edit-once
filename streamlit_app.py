@@ -62,10 +62,30 @@ if video_file is not None:
             )
 
         bbox_video_path = os.path.join(temp_path, "orig_video")
+
         video_stitch(
-            frame_predictions, bbox_video_path, video_file.name, origi_shape, fps
+            frame_predictions,
+            bbox_video_path,
+            video_file.name.replace(".mp4", ""),
+            origi_shape,
+            fps,
         )
-        os.system("ffmpeg -i {} -vcodec libx264 {}".format(out_video, out_video_recode))
+
+        # recode video using ffmpeg
+        video_bbox_filename = os.path.join(bbox_video_path, video_file.name)
+        video_bbox_recode_filename = video_bbox_filename.replace(".mp4", "_recoded.mp4")
+        os.system(
+            "ffmpeg -i {} -vcodec libx264 {}".format(
+                os.path.join(bbox_video_path, video_file.name),
+                video_bbox_recode_filename,
+            )
+        )
+
+        st.write(video_bbox_filename)
+        # st.write(os.listdir(os.path.join(RESULTS_PATH, latest_folder)))
+        st.write(video_bbox_recode_filename)
+        st.write("YOEO's Object Detection Results:")
+        st.video(video_bbox_recode_filename)
 
 ##STEP 3
 st.write("# 3. YOEO working its magic: ")
@@ -85,4 +105,4 @@ col1.metric("# Species Detected", "2")
 col2.metric("Turtle", "1")
 col3.metric("Fish", "23")
 
-st.video(vid_file)
+# st.video(vid_file)
