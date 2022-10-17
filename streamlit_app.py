@@ -20,7 +20,7 @@ with st.spinner(text="Loading Model ... Please be patient!"):
     session, input_name, output_name = load_model(MODEL_PATH)
 
 ##STEP 2 Upload Video
-st.write("# 1. Upload raw diving video:\n")
+st.write("# 1. Upload diving video:\n")
 
 # create temp dir for storing video and outputs
 temp_dir = tempfile.TemporaryDirectory()
@@ -37,6 +37,13 @@ if video_file is not None:
     st.write(file_details)
     video_path = save_uploaded_file(video_file, temp_path)
     st.write(video_path)
+
+    options = st.multiselect(
+        "What flora & fauna do you prefer",
+        ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
+        ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
+        help="Select the flora & fauna you want to be included in the final video",
+    )
 
     trim_bt = st.button("Start Auto-Trimming!")
     st.write(trim_bt)
@@ -80,29 +87,42 @@ if video_file is not None:
                 video_bbox_recode_filename,
             )
         )
+        tab_od, tab_trim = st.tabs(
+            ["YOEO's Object Detection Results", "YOEO's Trimmed Video"]
+        )
+        with tab_od:
+            st.write(video_bbox_filename)
+            # st.write(os.listdir(os.path.join(RESULTS_PATH, latest_folder)))
+            st.write(video_bbox_recode_filename)
+            st.subheader("YOEO's Object Detection Results:")
+            st.video(video_bbox_recode_filename)
 
-        st.write(video_bbox_filename)
-        # st.write(os.listdir(os.path.join(RESULTS_PATH, latest_folder)))
-        st.write(video_bbox_recode_filename)
-        st.write("YOEO's Object Detection Results:")
-        st.video(video_bbox_recode_filename)
+            st.subheader("Flora & Fauna Detected: ")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("# Species Detected", "2")
+            col2.metric("Turtle", "1")
+            col3.metric("Fish", "23")
+
+        with tab_trim:
+            st.subheader("YOEO's Trimmed Video:")
+
 
 ##STEP 3
-st.write("# 3. YOEO working its magic: ")
-st.write("-> to insert model inference and stich algo in progress bar")
-my_bar = st.progress(0)
+# st.write("# 3. YOEO working its magic: ")
+# st.write("-> to insert model inference and stich algo in progress bar")
+# my_bar = st.progress(0)
 
-for percent_complete in range(100):
-    time.sleep(0.1)
-    my_bar.progress(percent_complete + 1)
+# for percent_complete in range(100):
+#     time.sleep(0.1)
+#     my_bar.progress(percent_complete + 1)
 
 
 ##STEP 4
-st.write("# 4. Objects of interest detected and trimmed video output: ")
+# st.write("# 4. Objects of interest detected and trimmed video output: ")
 
-col1, col2, col3 = st.columns(3)
-col1.metric("# Species Detected", "2")
-col2.metric("Turtle", "1")
-col3.metric("Fish", "23")
+# col1, col2, col3 = st.columns(3)
+# col1.metric("# Species Detected", "2")
+# col2.metric("Turtle", "1")
+# col3.metric("Fish", "23")
 
 # st.video(vid_file)
