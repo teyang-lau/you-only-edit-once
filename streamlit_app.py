@@ -81,7 +81,7 @@ for percent_complete in range(100):
 st.write("# 4. Objects of interest detected and trimmed video output: ")
 
 col1, col2, col3 = st.columns(3)
-col1.metric("# Speciies Detected", "2")
+col1.metric("# Species Detected", "2")
 col2.metric("Turtle", "1")
 col3.metric("Fish", "23")
 
