@@ -154,24 +154,3 @@ def sharpen_image(input_path, output_path, plot=False):
             ax[0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
             ax[0].set(title="Original image")
             ax[0].axis("off")
-
-
-def bbox_area(bb):
-
-    """Calculate area of bounding box"""
-    # depends on output structure of predictions
-    # take note when working with pixel coordinates. add 1 when computing width & height
-    # https://stackoverflow.com/a/58108241/5433663
-    pass
-
-
-def all_bbox_union(bb):
-
-    """Calculate union area of all bounding boxes"""
-    pass
-
-
-def all_bbox_union_prop(bb):
-
-    """Calculate proportion of all bounding boxes union area over the framesize"""
-    pass
