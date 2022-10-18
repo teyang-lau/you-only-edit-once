@@ -66,6 +66,7 @@ onnxruntime==1.12.1
 opencv-python==4.6.0.66
 opt-einsum==3.3.0
 packaging==21.3
+pafy==0.5.5
 pandas==1.5.0
 parso==0.8.3
 pathspec==0.10.1
