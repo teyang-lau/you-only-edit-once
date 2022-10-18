@@ -7,7 +7,7 @@ import ffmpeg
 from pydub import AudioSegment
 
 # import soundfile as sf
-# import pafy
+import pafy
 # from datetime import datetime
 
 
