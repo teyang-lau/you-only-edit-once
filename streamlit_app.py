@@ -20,7 +20,11 @@ with st.spinner(text="Loading Model ... Please be patient!"):
     session, input_name, output_name = load_model(MODEL_PATH)
 
 ##STEP 2 Upload Video
-st.write("# 1. Upload diving video:\n")
+st.write("# Upload diving video:\n")
+
+with st.expander("How to Use YOEO"):
+    st.write("............")
+
 
 # create temp dir for storing video and outputs
 temp_dir = tempfile.TemporaryDirectory()
@@ -30,14 +34,15 @@ video_file = st.file_uploader(
     "Choose a File", accept_multiple_files=False, type=["mp4", "mov"]
 )
 
-# st.video(vid_file)
-
 if video_file is not None:
     file_details = {"FileName": video_file.name, "FileType": video_file.type}
     st.write(file_details)
     video_path = save_uploaded_file(video_file, temp_path)
     st.write(video_path)
+    # get fps for optimization slider max value
+    fps = round(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FPS))
 
+    # user options
     options = st.multiselect(
         "What flora & fauna do you prefer",
         ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
@@ -45,6 +50,15 @@ if video_file is not None:
         help="Select the flora & fauna you want to be included in the final video",
     )
 
+    # user advanced options
+    with st.expander("Advanced Options"):
+        st.write("###### Leave as default if unsure!")
+        op_val = st.slider("Optimization", min_value=1, max_value=fps, value=fps)
+        strict_val = st.slider("Trimming Strictness", min_value=0, value=24)
+        sharpen = st.checkbox("Sharpen Video")
+        color_grade = st.checkbox("Color Grade Video")
+
+    # start inferencing
     trim_bt = st.button("Start Auto-Trimming!")
     st.write(trim_bt)
     if trim_bt:
@@ -105,6 +119,12 @@ if video_file is not None:
 
         with tab_trim:
             st.subheader("YOEO's Trimmed Video:")
+
+with st.expander("About YOEO"):
+    st.write(
+        "YOEO (You Only Edit Once) is an object detection model and web application created by data scientists and AI practitioners who are diving enthusiasts!"
+    )
+    st.write("The Model is trained on ...")
 
 
 ##STEP 3
