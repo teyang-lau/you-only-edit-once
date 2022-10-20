@@ -58,6 +58,7 @@ matplotlib-inline==0.1.6
 mpmath==1.2.1
 mypy-extensions==0.4.3
 nest-asyncio==1.5.6
+ninja==1.10.2.4
 numba==0.56.3
 numpy==1.23.3
 oauthlib==3.2.1
@@ -81,6 +82,7 @@ pure-eval==0.2.2
 pyarrow==9.0.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
+pycocotools==2.0.5
 pycparser==2.21
 pydeck==0.8.0b4
 pydub==0.25.1
@@ -108,6 +110,7 @@ soundfile==0.11.0
 stack-data==0.5.1
 streamlit==1.13.0
 sympy==1.11.1
+tabulate==0.9.0
 tensorboard==2.10.1
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
@@ -115,6 +118,7 @@ tensorflow-estimator==2.10.0
 tensorflow-hub==0.12.0
 tensorflow-io-gcs-filesystem==0.27.0
 termcolor==2.0.1
+thop==0.1.1.post2209072238
 threadpoolctl==3.1.0
 toml==0.10.2
 tomli==2.0.1
@@ -122,6 +126,7 @@ toolz==0.12.0
 torch==1.12.1
 torchvision==0.13.1
 tornado==6.2
+tqdm==4.64.1
 traitlets==5.4.0
 typing_extensions==4.3.0
 tzdata==2022.5
