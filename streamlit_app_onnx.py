@@ -4,15 +4,16 @@ import time
 import os
 import tempfile
 import matplotlib.pyplot as plt
-from src.utils.onnx_process import load_model, video_predict
+from src.utils.streamlit import factors
+from src.utils.onnx_process import load_model, load_label_map, video_predict
 from src.utils.video_process import video_stitch
 from src.utils.streamlit import save_uploaded_file
 
 MODEL_PATH = "./results/models/onnx_dive/model.onnx"
 LABEL_PATH = "./results/models/onnx_dive/label_map.pbtxt"
 MODEL_INPUT_SIZE = (640, 640)  # width, height
-NUM_CLASSES = 3
-CONF_THRESHOLD = 0.1
+NUM_CLASSES = 5
+CONF_THRESHOLD = 0.2
 NMS_THRESHOLD = 0.1
 
 ##STEP 1 Load Model
@@ -41,22 +42,33 @@ if video_file is not None:
     st.write(video_path)
     # get fps for optimization slider max value
     fps = round(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FPS))
+    factors_fps = list(factors(fps))
 
     # user options
-    options = st.multiselect(
+    marine_options = st.multiselect(
         "What flora & fauna do you prefer",
         ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
         ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
         help="Select the flora & fauna you want to be included in the final video",
     )
+    label_map = load_label_map(LABEL_PATH)
+    new_label_map = {}
+    for key, val in label_map.items():
+        new_label_map[val["name"].lower().replace('"', "")] = key - 1
+    marine_options = [new_label_map[x.lower()] for x in marine_options]
 
     # user advanced options
     with st.expander("Advanced Options"):
         st.write("###### Leave as default if unsure!")
-        op_val = st.slider("Optimization", min_value=1, max_value=fps, value=fps)
-        strict_val = st.slider("Trimming Strictness", min_value=0, value=24)
+        opt_val = st.select_slider(
+            "Optimization", options=factors_fps, value=max(factors_fps)
+        )  # num of frames per sec to do inferencing
+        strict_val = st.slider(
+            "Trimming Strictness", min_value=0, value=fps
+        )  # number of frames prior to keep if current frame is to be kept
         sharpen = st.checkbox("Sharpen Video")
         color_grade = st.checkbox("Color Grade Video")
+        yt_link = st.text_input("Enter a Youtube Audio Link")
 
     # start inferencing
     trim_bt = st.button("Start Auto-Trimming!")
@@ -80,6 +92,7 @@ if video_file is not None:
                 NUM_CLASSES,
                 CONF_THRESHOLD,
                 NMS_THRESHOLD,
+                opt_val,
             )
 
         bbox_video_path = os.path.join(temp_path, "orig_video")
@@ -101,8 +114,12 @@ if video_file is not None:
                 video_bbox_recode_filename,
             )
         )
-        tab_od, tab_trim = st.tabs(
-            ["YOEO's Object Detection Results", "YOEO's Trimmed Video"]
+        tab_od, tab_trim, tab_beauty = st.tabs(
+            [
+                "YOEO's Object Detection Results",
+                "Your Trimmed Video",
+                "Beautiful Photos Captured By You",
+            ]
         )
         with tab_od:
             st.write(video_bbox_filename)
@@ -119,6 +136,9 @@ if video_file is not None:
 
         with tab_trim:
             st.subheader("YOEO's Trimmed Video:")
+
+        with tab_beauty:
+            st.subheader("YOEO's Beautiful Photos:")
 
 with st.expander("About YOEO"):
     st.write(
