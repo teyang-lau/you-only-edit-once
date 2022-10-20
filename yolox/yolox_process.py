@@ -98,7 +98,7 @@ def load_model(exp, ckpt_file):
     return model
 
 
-def video_predict(video_file, out_path, model, exp, YOEO_CLASSES, verbose=False):
+def video_predict(video_file, out_path, model, exp, YOEO_CLASSES, ifps, verbose=False):
 
     predictor = Predictor(model, exp, YOEO_CLASSES)
 
@@ -126,23 +126,27 @@ def video_predict(video_file, out_path, model, exp, YOEO_CLASSES, verbose=False)
         if success:
             orig_frames.append(img)
 
-            frame_start_time = time.time()
-            outputs, img_info = predictor.inference(img)
-            result_frame, results = predictor.visual(
-                outputs[0], img_info, predictor.confthre
-            )
-            vid_writer.write(result_frame)
-            ch = cv2.waitKey(1)
-            if ch == 27 or ch == ord("q") or ch == ord("Q"):
-                break
-
-            bbox_class_score.append(results)
-
-            if verbose:
-                print(
-                    "--- Frame inferred in %0.2f seconds ---"
-                    % (time.time() - frame_start_time)
+            if index % (fps / ifps) == 0:  # inference optimization
+                frame_start_time = time.time()
+                outputs, img_info = predictor.inference(img)
+                result_frame, results = predictor.visual(
+                    outputs[0], img_info, predictor.confthre
                 )
+                vid_writer.write(result_frame)
+                ch = cv2.waitKey(1)
+                if ch == 27 or ch == ord("q") or ch == ord("Q"):
+                    break
+
+                if verbose:
+                    print(
+                        "--- Frame inferred in %0.2f seconds ---"
+                        % (time.time() - frame_start_time)
+                    )
+
+                bbox_class_score.append(results)
+
+            else:
+                vid_writer.write(img)
 
         elif index > num_frames:
             break
