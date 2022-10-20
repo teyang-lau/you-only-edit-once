@@ -1,6 +1,4 @@
-.data
-./data
 data
-./venv
 venv
-./results/others
+results/others/
+__pycache__/
