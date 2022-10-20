@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import os
 import cv2
+import numpy as np
 import youtube_dl
 import librosa
 import ffmpeg
@@ -8,7 +9,29 @@ from pydub import AudioSegment
 
 # import soundfile as sf
 import pafy
+
 # from datetime import datetime
+
+
+# def insert_inferred_into_video_frames(frame_predictions, inferred_indices, orig_frames):
+
+#     """Insert inferred frames into original frames
+
+#     Args:
+#     frame_predictions (list): list of numpy arrays of frames with bbox drawn
+#     inferred_indices (list): list of indices of frames that were inferred
+#     orig_frames (list): list of numpy arrays of original frames
+
+#     Returns:
+#     tmp_frames (list)
+
+#     """
+
+#     tmp_frames = orig_frames.copy()
+#     tmp_frames = np.array([cv2.cvtColor(x, cv2.COLOR_BGR2RGB) for x in tmp_frames])
+#     tmp_frames[np.array(inferred_indices)] = frame_predictions
+
+#     return tmp_frames
 
 
 def video_stitch(
