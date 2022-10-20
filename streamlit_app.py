@@ -4,8 +4,7 @@ import os
 import tempfile
 import matplotlib.pyplot as plt
 from src.utils.streamlit import save_uploaded_file, factors
-from tmp.yolox_process import create_exp, load_model, video_predict
-from tmp.yoeo_classes import YOEO_CLASSES
+from src.utils.yolox_process import create_exp, load_model, video_predict, YOEO_CLASSES
 
 
 MODEL_PATH = "./results/models/yolox_dive.pth"
