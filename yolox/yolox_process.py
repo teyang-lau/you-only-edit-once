@@ -4,10 +4,11 @@ import time
 import cv2
 import torch
 
-from data.data_augment import ValTransform
-from data.datasets import YOEO_CLASSES
-from exp import get_exp
-from utils import postprocess, vis
+from data_augment import ValTransform
+from yoeo_classes import YOEO_CLASSES
+from build import get_exp
+from visualize import vis
+from boxes import postprocess
 
 
 class Predictor(object):
