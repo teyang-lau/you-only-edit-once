@@ -9,11 +9,11 @@ def get_top_frames(scores, num, fps, dispersed = True):
 
   Users can define the 'dispersed' function if they wish to have num images
   taken from different parts of the video. In this instance, we randomly sample 
-  200 frames from the video and score these frames.
+  10% of the frames from the video and score these frames.
   
   Otherwise the function just returns the best num images from the frames scored.
   '''
-  if len(scores)<=200:
+  if len(scores)<=1000:
     dispersed = False
     
   if dispersed:
@@ -21,7 +21,7 @@ def get_top_frames(scores, num, fps, dispersed = True):
     tmp = []
 
     while True:
-      if len(tmp) == 200:
+      if len(tmp) == int(0.1*len(scores)):
         break   
       
       sampled_frame = random.choice(scores)
