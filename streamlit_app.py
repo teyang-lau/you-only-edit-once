@@ -1,10 +1,45 @@
 import streamlit as st
 import cv2
 import os
+import sys
 import tempfile
+import time
 import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
 from src.utils.streamlit import save_uploaded_file, factors
-from src.utils.yolox_process import create_exp, load_model, video_predict, YOEO_CLASSES
+from src.utils.yolox_process import video_predict
+from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
+
+
+def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
+
+    def init_yolo(M):
+        for m in M.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.eps = 1e-3
+                m.momentum = 0.03
+
+    in_channels = [256, 512, 1024]
+    # NANO model use depthwise = True, which is main difference.
+    backbone = YOLOPAFPN(depth, width, in_channels=in_channels, depthwise=True)
+    head = YOLOXHead(num_classes, width, in_channels=in_channels, depthwise=True)
+    model = YOLOX(backbone, head)
+
+    model.apply(init_yolo)
+    model.head.initialize_biases(1e-2)
+    model.eval()
+    # model
+
+    ckpt = torch.load(ckpt_file, map_location="cpu")
+    # load the model state dict
+    model.load_state_dict(ckpt["model"])
+
+    return model
 
 
 MODEL_PATH = "./results/models/yolox_dive.pth"
@@ -14,13 +49,18 @@ MODEL_INPUT_SIZE = (640, 640)  # width, height
 NUM_CLASSES = 5
 CONF_THRESHOLD = 0.25
 NMS_THRESHOLD = 0.45
+YOEO_CLASSES = (
+    "shark",
+    "coral",
+    "fish",
+    "turtle",
+    "manta ray",
+)
+
 
 ##STEP 1 Load Model
 with st.spinner(text="Loading Model ... Please be patient!"):
-    exp = create_exp(
-        EXP_PATH, MODEL_NAME, CONF_THRESHOLD, NMS_THRESHOLD, MODEL_INPUT_SIZE
-    )
-    model = load_model(exp, MODEL_PATH)
+    model = load_model(MODEL_PATH, depth, width, num_classes)
 
 ##STEP 2 Upload Video
 st.write("# Upload diving video:\n")
@@ -78,7 +118,10 @@ if video_file is not None:
                 video_path,
                 video_bbox_filename,
                 model,
-                exp,
+                NUM_CLASSES,
+                CONF_THRESHOLD, 
+                NMS_THRESHOLD,
+                MODEL_INPUT_SIZE,
                 YOEO_CLASSES,
                 ifps,
                 verbose=True,
