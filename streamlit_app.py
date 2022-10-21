@@ -43,8 +43,8 @@ def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
 
 
 MODEL_PATH = "./results/models/yolox_dive.pth"
-MODEL_NAME = "yolox-nano"
-EXP_PATH = "./exps/example/custom/nano.py"
+# MODEL_NAME = "yolox-nano"
+# EXP_PATH = "./exps/example/custom/nano.py"
 MODEL_INPUT_SIZE = (640, 640)  # width, height
 NUM_CLASSES = 5
 CONF_THRESHOLD = 0.25
@@ -101,7 +101,10 @@ if video_file is not None:
         with st.form("my_form"):
             st.write("###### Leave as default if unsure!")
             ifps = st.select_slider(
-                "Optimization", options=factors_fps, value=max(factors_fps)
+                "Speed Optimization",
+                options=factors_fps,
+                value=max(factors_fps),
+                help="Frames per sec to infer on. Smaller value means faster trimming but at the expense of performance!",
             )  # num of frames per sec to do inferencing
             strict_val = st.slider(
                 "Trimming Strictness", min_value=0, value=fps
@@ -135,6 +138,9 @@ if video_file is not None:
 
         # recode video using ffmpeg
         video_bbox_recode_filename = video_bbox_filename.replace(".mp4", "_recoded.mp4")
+        video_bbox_recode_filename = video_bbox_recode_filename.replace(
+            ".MP4", "_recoded.mp4"
+        )
         os.system(
             "ffmpeg -i {} -vcodec libx264 {}".format(
                 os.path.join(video_bbox_filename),
