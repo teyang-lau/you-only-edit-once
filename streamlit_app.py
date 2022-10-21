@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import shutil
+import gc
 import time
 import matplotlib.pyplot as plt
 import torch
@@ -14,6 +15,8 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from src.utils.streamlit import save_uploaded_file, factors
 from src.utils.yolox_process import video_predict
+from src.utils.scoring_frames import scores_over_all_frames, filter_frames
+from src.utils.video_process import video_stitch
 from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
@@ -153,6 +156,38 @@ if video_file is not None:
         shutil.rmtree(os.path.join(temp_path, "orig_video"))
         st.write(os.listdir(temp_path))
 
+        # score frames
+        area_scores, count_scores = scores_over_all_frames(
+            bbox_class_score, origi_shape
+        )
+
+        filtered_frames, filtered_scores = filter_frames(
+            orig_frames, None, area_scores, count_scores, 1, strict_val, fps, ifps
+        )
+        # remove orig frames
+        del orig_frames
+        gc.collect()
+
+        # stitch filtered frames into video
+        video_trimmed_filename = video_stitch(
+            filtered_frames,
+            temp_path,
+            "trimmed_" + video_file.name.replace(".mp4", ""),
+            origi_shape,
+            fps,
+            RGB2BGR=False,
+        )
+        video_trimmed_recode_filename = video_trimmed_filename.replace(
+            ".mp4", "_recoded.mp4"
+        )
+
+        os.system(
+            "ffmpeg -i {} -vcodec libx264 {}".format(
+                video_trimmed_filename,
+                video_trimmed_recode_filename,
+            )
+        )
+
         tab_od, tab_trim, tab_beauty = st.tabs(
             [
                 "YOEO's Object Detection Results",
@@ -175,13 +210,18 @@ if video_file is not None:
 
         with tab_trim:
             st.subheader("YOEO's Trimmed Video:")
+            st.write((video_trimmed_recode_filename))
+            st.video(video_trimmed_recode_filename)
+            st.write(os.listdir(temp_path))
 
         with tab_beauty:
             st.subheader("YOEO's Beautiful Photos:")
 
         # remove recoded video to save space as it is not needed anymore
+        # REMOVE OTHER VIDEOS!
         os.remove(video_bbox_recode_filename)
         st.write(os.listdir(temp_path))
+
 
 with st.expander("About YOEO"):
     st.write(
