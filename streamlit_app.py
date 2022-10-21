@@ -13,10 +13,14 @@ import torch.nn as nn
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from src.utils.streamlit import save_uploaded_file, factors
+from src.utils.streamlit import save_uploaded_file, factors, get_all_files
 from src.utils.yolox_process import video_predict
-from src.utils.scoring_frames import scores_over_all_frames, filter_frames
-from src.utils.video_process import video_stitch
+from src.utils.scoring_frames import (
+    scores_over_all_frames,
+    filter_area_and_count,
+    filter_area,
+)
+from src.utils.video_process import filter_video
 from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
@@ -97,7 +101,14 @@ if video_file is not None:
         ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
         help="Select the flora & fauna you want to be included in the final video",
     )
-    marine_options_idx = [0, 1, 2, 3, 4]
+    marine_options_map = {
+        "Shark": 0,
+        "Corals": 1,
+        "Fish": 2,
+        "Turtle": 3,
+        "Manta Ray": 4,
+    }
+    marine_options = [*map(marine_options_map.get, marine_options)]
 
     # user advanced options
     with st.expander("Advanced Options"):
@@ -125,8 +136,10 @@ if video_file is not None:
     trim_bt = st.button("Start Auto-Trimming!")
     st.write(trim_bt)
     if trim_bt:
-        with st.spinner(text="YOEO working its magic: IN PROGRESS ..."):
-            bbox_class_score, orig_frames, origi_shape, fps = video_predict(
+        with st.spinner(
+            text="YOEO working its magic: OBJECT DETECTION IN PROGRESS ..."
+        ):
+            bbox_class_score, origi_shape, fps, num_frames = video_predict(
                 video_path,
                 video_bbox_filename,
                 model,
@@ -139,54 +152,59 @@ if video_file is not None:
                 verbose=True,
             )
 
-        # recode video using ffmpeg
-        video_bbox_recode_filename = video_bbox_filename.replace(".mp4", "_recoded.mp4")
-        video_bbox_recode_filename = video_bbox_recode_filename.replace(
-            ".MP4", "_recoded.mp4"
-        )
-        os.system(
-            "ffmpeg -i {} -vcodec libx264 {}".format(
-                os.path.join(video_bbox_filename),
-                video_bbox_recode_filename,
+            # recode video using ffmpeg
+            video_bbox_recode_filename = video_bbox_filename.replace(
+                ".mp4", "_recoded.mp4"
             )
-        )
-
-        # remove original video and obj detect video to save space
-        os.remove(video_bbox_filename)
-        shutil.rmtree(os.path.join(temp_path, "orig_video"))
-        st.write(os.listdir(temp_path))
-
-        # score frames
-        area_scores, count_scores = scores_over_all_frames(
-            bbox_class_score, origi_shape
-        )
-
-        filtered_frames, filtered_scores = filter_frames(
-            orig_frames, None, area_scores, count_scores, 1, strict_val, fps, ifps
-        )
-        # remove orig frames
-        del orig_frames
-        gc.collect()
-
-        # stitch filtered frames into video
-        video_trimmed_filename = video_stitch(
-            filtered_frames,
-            temp_path,
-            "trimmed_" + video_file.name.replace(".mp4", ""),
-            origi_shape,
-            fps,
-            RGB2BGR=False,
-        )
-        video_trimmed_recode_filename = video_trimmed_filename.replace(
-            ".mp4", "_recoded.mp4"
-        )
-
-        os.system(
-            "ffmpeg -i {} -vcodec libx264 {}".format(
-                video_trimmed_filename,
-                video_trimmed_recode_filename,
+            video_bbox_recode_filename = video_bbox_recode_filename.replace(
+                ".MP4", "_recoded.mp4"
             )
-        )
+            os.system(
+                "ffmpeg -i {} -vcodec libx264 {}".format(
+                    os.path.join(video_bbox_filename),
+                    video_bbox_recode_filename,
+                )
+            )
+
+            # remove obj detect video to save space
+            os.remove(video_bbox_filename)
+            st.write(os.listdir(temp_path))
+
+            # score frames
+            area_scores, count_scores, marine_mask = scores_over_all_frames(
+                bbox_class_score, marine_options, origi_shape
+            )
+            # filter scores for each frame
+            filtered_scores, filtered_idx = filter_area_and_count(
+                area_scores,
+                count_scores,
+                marine_mask,
+                1.1,
+                strict_val,
+                fps,
+                ifps,
+                num_frames,
+            )
+            st.write(len(filtered_idx) / len(area_scores))
+            st.write(len(filtered_idx))
+
+        with st.spinner(text="YOEO working its magic: Trimming ..."):
+            # run through video and filter video
+            video_trimmed_filename = os.path.join(
+                temp_path, "orig_video", "trimmed.mp4"
+            )
+            video_trimmed_recode_filename = video_trimmed_filename.replace(
+                ".mp4", "_recoded.mp4"
+            )
+            filter_video(video_path, video_trimmed_filename, filtered_idx)
+
+            os.system(
+                "ffmpeg -i {} -vcodec libx264 {}".format(
+                    video_trimmed_filename,
+                    video_trimmed_recode_filename,
+                )
+            )
+            os.remove(video_trimmed_filename)
 
         tab_od, tab_trim, tab_beauty = st.tabs(
             [
@@ -213,6 +231,8 @@ if video_file is not None:
             st.write((video_trimmed_recode_filename))
             st.video(video_trimmed_recode_filename)
             st.write(os.listdir(temp_path))
+            allfiles = get_all_files(temp_path)
+            st.write(allfiles)
 
         with tab_beauty:
             st.subheader("YOEO's Beautiful Photos:")
