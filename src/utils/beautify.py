@@ -8,8 +8,10 @@ def get_top_frames(scores, num, fps, dispersed = True):
   specified by the user. 
 
   Users can define the 'dispersed' function if they wish to have num images
-  taken from different parts of the video. Otherwise the function just returns
-  the best num images from the frames scored.
+  taken from different parts of the video. In this instance, we randomly sample 
+  200 frames from the video and score these frames.
+  
+  Otherwise the function just returns the best num images from the frames scored.
   '''
   if len(scores)<=200:
     dispersed = False
