@@ -42,19 +42,25 @@ def all_bbox_unionall_prop_torch(bboxes, origi_shape):
     return bbox_area_prop.sum()
 
 
-def scores_over_all_frames(bbox_class_score, origi_shape):
-    area_scores, count_scores = [], []
+def scores_over_all_frames(bbox_class_score, marine_options, origi_shape):
+    area_scores, count_scores, marine_mask = [], [], []
     for frame in bbox_class_score:
         if len(frame[0]) == 0:
             area_scores.append(0)
             count_scores.append(0)
+            marine_mask.append(False)
         else:
             area_scores.append(
                 all_bbox_unionall_prop_torch(frame[0], origi_shape).item()
             )
             count_scores.append(frame[1].size()[0])
+            marine_mask.append(
+                True
+                if set(frame[1].numpy().astype("int")) & set(marine_options)
+                else False
+            )
 
-    return np.array(area_scores), np.array(count_scores)
+    return np.array(area_scores), np.array(count_scores), np.array(marine_mask)
 
 
 def check_frames(bbox_class_score, marine_options):
@@ -149,6 +155,65 @@ def filter_frames(
     # idx_filtered_frames = adjusted_mask.nonzero()[0]
 
     return filtered_frames, filtered_scores
+
+
+def filter_area_and_count(
+    area_scores, count_scores, marine_mask, threshold, strictness, fps, ifps, num_frames
+):
+
+    """
+    Filter frames based on whether frame contains any of user-specified classes
+    Then, filter frames based on score using a moving past window.
+    If current frame is to be kept, set previous n frames to be kept as well for smoother transitions
+
+    Args:
+    orig_frames (list): list of numpy arrays of original frames
+    user_mask (list): list of numpy arrays of original frames
+    frame_scores (np.array): array of scores for each frame
+    threshold (float): threshold for filtering out frames based on scores
+    strictness (int): number of prior frames to keep if current frame is to be kept
+
+    Returns:
+    filtered_frames (np.array): filtered array of frames
+    filtered_scores (np.array): filtered array of frame scores
+    idx_filtered_frames(np.array): indices of filtered frames
+
+    """
+
+    # min-max scale
+    area_scores = (area_scores - np.min(area_scores)) / (
+        np.max(area_scores) - np.min(area_scores)
+    )
+    count_scores = (count_scores - np.min(count_scores)) / (
+        np.max(count_scores) - np.min(count_scores)
+    )
+    sum_scores = area_scores + count_scores
+    mask = sum_scores >= threshold
+    mask = np.logical_and(mask, marine_mask)
+
+    # input mask and sum_scores to same size as orig frame
+    mask = np.repeat(mask, fps / ifps)
+    sum_scores = np.repeat(sum_scores, fps / ifps)
+
+    adjusted_mask = mask.copy()
+    # moving past window
+    adjusted_mask[
+        np.maximum(np.flatnonzero(adjusted_mask) - strictness, 0)[:, None]
+        + np.arange(strictness)
+    ] = True
+
+    padded_mask = np.full(num_frames, False)
+    padded_mask[: len(adjusted_mask)] = adjusted_mask
+    padded_mask
+
+    filtered_scores = sum_scores[adjusted_mask]
+    filtered_idx = (adjusted_mask == True).nonzero()
+
+    return filtered_scores, filtered_idx[0]
+
+
+def filter_area():
+    pass
 
 
 # def filter_frames(orig_frames, class_mask, frame_scores, threshold, strictness):
