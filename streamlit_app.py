@@ -3,6 +3,7 @@ import cv2
 import os
 import sys
 import tempfile
+import shutil
 import time
 import matplotlib.pyplot as plt
 import torch
@@ -97,16 +98,22 @@ if video_file is not None:
 
     # user advanced options
     with st.expander("Advanced Options"):
-        st.write("###### Leave as default if unsure!")
-        ifps = st.select_slider(
-            "Optimization", options=factors_fps, value=max(factors_fps)
-        )  # num of frames per sec to do inferencing
-        strict_val = st.slider(
-            "Trimming Strictness", min_value=0, value=fps
-        )  # number of frames prior to keep if current frame is to be kept
-        sharpen = st.checkbox("Sharpen Video")
-        color_grade = st.checkbox("Color Grade Video")
-        yt_link = st.text_input("Enter a Youtube Audio Link")
+        with st.form("my_form"):
+            st.write("###### Leave as default if unsure!")
+            ifps = st.select_slider(
+                "Optimization", options=factors_fps, value=max(factors_fps)
+            )  # num of frames per sec to do inferencing
+            strict_val = st.slider(
+                "Trimming Strictness", min_value=0, value=fps
+            )  # number of frames prior to keep if current frame is to be kept
+            sharpen = st.checkbox("Sharpen Video")
+            color_grade = st.checkbox("Color Grade Video")
+            yt_link = st.text_input("Enter a Youtube Audio Link")
+
+            # Every form must have a submit button.
+            submitted = st.form_submit_button("Submit Advanced Options")
+            if submitted:
+                st.write("Optimization", ifps, "strict_val", strict_val)
 
     # start inferencing
     trim_bt = st.button("Start Auto-Trimming!")
@@ -135,6 +142,11 @@ if video_file is not None:
             )
         )
 
+        # remove original video and obj detect video to save space
+        os.remove(video_bbox_filename)
+        shutil.rmtree(os.path.join(temp_path, "orig_video"))
+        st.write(os.listdir(temp_path))
+
         tab_od, tab_trim, tab_beauty = st.tabs(
             [
                 "YOEO's Object Detection Results",
@@ -160,6 +172,10 @@ if video_file is not None:
 
         with tab_beauty:
             st.subheader("YOEO's Beautiful Photos:")
+
+        # remove recoded video to save space as it is not needed anymore
+        os.remove(video_bbox_recode_filename)
+        st.write(os.listdir(temp_path))
 
 with st.expander("About YOEO"):
     st.write(
