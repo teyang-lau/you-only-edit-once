@@ -11,11 +11,11 @@ def get_top_frames(scores, num, fps, dispersed = True):
   taken from different parts of the video. Otherwise the function just returns
   the best num images from the frames scored.
   '''
+  if len(scores)<=200:
+    dispersed = False
+    
   if dispersed:
-
-    if len(scores) <= 200:
-      return sorted(list(zip(*heapq.nlargest(num, enumerate(scores), 
-                                           key = operator.itemgetter(1))))[0])
+    
     tmp = []
 
     while True:
