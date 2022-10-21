@@ -49,12 +49,12 @@ def video_stitch(
     RGB2BGR (bool): whether to convert RGB2BGR for the images before stitching
 
     """
-
+    out_vid_path = os.path.join(video_out_path, video_name) + ".mp4"
     out_vid_bbox = cv2.VideoWriter(
-        os.path.join(video_out_path, video_name) + ".mp4",
+        out_vid_path,
         cv2.VideoWriter_fourcc(*"mp4v"),
         fps,
-        (origi_shape[1], origi_shape[0]),
+        (int(origi_shape[0]), int(origi_shape[1])),
     )
     for img_array in images_array:
         if RGB2BGR:
@@ -62,6 +62,8 @@ def video_stitch(
         else:
             out_vid_bbox.write(img_array)
     out_vid_bbox.release()
+
+    return out_vid_path
 
 
 def moviemaker(audio_file, video_file, output_path, youtube_url=False):
