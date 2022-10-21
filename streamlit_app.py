@@ -17,7 +17,6 @@ from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
 def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
-
     def init_yolo(M):
         for m in M.modules():
             if isinstance(m, nn.BatchNorm2d):
@@ -60,7 +59,7 @@ YOEO_CLASSES = (
 
 ##STEP 1 Load Model
 with st.spinner(text="Loading Model ... Please be patient!"):
-    model = load_model(MODEL_PATH, depth, width, num_classes)
+    model = load_model(MODEL_PATH)
 
 ##STEP 2 Upload Video
 st.write("# Upload diving video:\n")
@@ -119,7 +118,7 @@ if video_file is not None:
                 video_bbox_filename,
                 model,
                 NUM_CLASSES,
-                CONF_THRESHOLD, 
+                CONF_THRESHOLD,
                 NMS_THRESHOLD,
                 MODEL_INPUT_SIZE,
                 YOEO_CLASSES,
