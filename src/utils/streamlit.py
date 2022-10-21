@@ -25,3 +25,16 @@ def factors(n):
             ([i, n // i] for i in range(1, int(n**0.5) + 1) if n % i == 0),
         )
     )
+
+
+def get_all_files(path):
+
+    # we shall store all the file names in this list
+    filelist = []
+
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            # append the file name to the list
+            filelist.append(os.path.join(root, file))
+
+    return filelist
