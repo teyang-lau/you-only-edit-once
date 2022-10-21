@@ -66,6 +66,37 @@ def video_stitch(
     return out_vid_path
 
 
+def filter_video(video_path, out_path, filtered_idx, remove_orig=True):
+    cap = cv2.VideoCapture(video_path)
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+    fps = round(cap.get(cv2.CAP_PROP_FPS))
+    num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    vid_writer = cv2.VideoWriter(
+        out_path,
+        cv2.VideoWriter_fourcc(*"mp4v"),
+        fps,
+        (int(width), int(height)),
+    )
+
+    idx = 0
+    while True:
+        success, img = cap.read()
+        if success and (idx in filtered_idx):
+            vid_writer.write(img)
+        idx += 1
+
+        if idx > num_frames:
+            break
+
+    vid_writer.release()
+    cap.release()
+
+    if remove_orig:
+        os.remove(video_path)
+
+
 def moviemaker(audio_file, video_file, output_path, youtube_url=False):
     """
     Creates a movie depending with the duration equivalent to the shortest duration
