@@ -502,7 +502,6 @@ def video_predict(
     if verbose:
         print(num_frames, "frames detected!")
 
-    orig_frames = []
     bbox_class_score = []
 
     vid_writer = cv2.VideoWriter(
@@ -515,7 +514,6 @@ def video_predict(
         success, img = cap.read()
         index += 1
         if success:
-            orig_frames.append(img)
 
             if index % (fps / ifps) == 0:  # inference optimization
                 frame_start_time = time.time()
@@ -546,7 +544,7 @@ def video_predict(
 
     return (
         bbox_class_score,
-        orig_frames,
         origi_shape,
         fps,
+        num_frames,
     )
