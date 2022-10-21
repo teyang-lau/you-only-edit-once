@@ -519,7 +519,7 @@ def video_predict(
 
             if index % (fps / ifps) == 0:  # inference optimization
                 frame_start_time = time.time()
-                outputs, img_info = predictor.inference(img)
+                outputs, img_info = predictor.inference(img.copy())
                 result_frame, results = predictor.visual(
                     outputs[0], img_info, predictor.confthre
                 )
@@ -539,7 +539,7 @@ def video_predict(
             else:
                 vid_writer.write(img)
 
-        elif index > num_frames:
+        if index > num_frames:
             break
 
     print("--- Completed in %0.2f seconds ---" % (time.time() - start_time))
