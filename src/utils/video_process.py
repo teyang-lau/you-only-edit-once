@@ -166,3 +166,11 @@ def add_audio(audio_file, video_file, output_path, temp_path, youtube_url=False)
             video_file, audio_file, output_path
         )
     )
+
+
+def main():
+    pass
+
+
+if __name__ == "__main__":
+    main()
