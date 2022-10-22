@@ -196,7 +196,7 @@ def beautify(image_directory, indices, output_path, manual=False, filter = 'huds
 
       ## Check and sharpen ##
       if do_we_need_to_sharpen(img)==True:
-        img = sharpen_my_image(img)
+        img = sharpen_image(img)
       
       ## Check and adjust brightness ##
       if lux <=90:
