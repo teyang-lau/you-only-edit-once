@@ -125,20 +125,21 @@ def sharpen_image(input_path, output_path, plot=False):
                 out_image = sharp
                 break
 
-    out = (
-        output_path
-        + "/"
-        + filename
-        + dt.now().strftime("%Y%m%d_%H%M")
-        + "_sharpened.jpg"
-    )
+        out = (
+            output_path
+            + "/"
+            + filename
+            + dt.now().strftime("%Y%m%d_%H%M")
+            + "_sharpened.jpg"
+        )
 
-    cv2.imwrite(out, sharp)
+        cv2.imwrite(out, sharp)
+    
+    else: print('Image does not need sharpening')
 
     if plot == True:
-        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(15, 5))
-
         if do_we_need_to_sharpen(image) == True:
+            fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(15, 5))
             ax[0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
             ax[0].set(
                 title=f"Original image: Variance of Laplacian:{cv2.Laplacian(image, cv2.CV_64F).var():.3f}"
@@ -151,6 +152,6 @@ def sharpen_image(input_path, output_path, plot=False):
             ax[1].axis("off")
 
         else:
-            ax[0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-            ax[0].set(title="Original image")
-            ax[0].axis("off")
+            plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            plt.title("Original image")
+            plt.axis("off")
