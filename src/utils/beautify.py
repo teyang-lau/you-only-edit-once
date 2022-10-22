@@ -189,29 +189,31 @@ def beautify(image_directory, indices, output_path, manual=False, filter = 'huds
     filename = img_name.split(".")[0]
 
     img_p = Image.open(input_path)
-    
+    lux = brightness(img_p)
+
     if not manual:
       img = cv2.imread(input_path)
 
       ## Check and sharpen ##
       if do_we_need_to_sharpen(img)==True:
         img = sharpen_my_image(img)
-
-      ## Check and adjust brightness ##
-      if brightness(img_p) <=90:
-        img = cv2.convertScaleAbs(img, beta=95-brightness(img))
-      elif brightness(img_p)>100:
-        img = cv2.convertScaleAbs(img, beta=95-brightness(img))
       
+      ## Check and adjust brightness ##
+      if lux <=90:
+        img = cv2.convertScaleAbs(img, beta=95-lux)
+        
+      elif lux>100:
+        img = cv2.convertScaleAbs(img, beta=95-lux)
+        
       ## Reduce blue light ##
       img = Summer(img)
-      cv2.imwrite(f'{output_path}/{filename}_enhanced.png')
+      cv2.imwrite(f'{output_path}/{filename}_enhanced.png', img)
 
       ## Icing on the cake ##
       img = Image.open(f'{output_path}/{filename}_enhanced.png')
-      pilgram.hudson(img).save(f'{output_path}/{filename}_enhanced.jpg')
+      filter(img).save(f'{output_path}/{filename}_enhanced.png')
 
     else:
-      filter(img_p).save(f'{output_path}/{filename}_enhanced.jpg')
+      filter(img).save(f'{output_path}/{filename}_enhanced.png')
 
   print('Image beautified! Enjoy!')
