@@ -20,10 +20,11 @@ from src.utils.scoring_frames import (
     filter_area_and_count,
     filter_area,
 )
-from src.utils.video_process import filter_video
+from src.utils.video_process import filter_video, add_audio
 from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
+@st.cache()
 def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
     def init_yolo(M):
         for m in M.modules():
@@ -95,6 +96,14 @@ if video_file is not None:
     factors_fps = list(factors(fps))
 
     # user options
+    st.markdown(
+        """
+        <style>
+        .stMultiSelect > label {font-size:150%; font-weight:bold;}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )  # for all multi-select label sections
     marine_options = st.multiselect(
         "What flora & fauna do you prefer",
         ["Fish", "Coral", "Turtle", "Shark", "Manta Ray"],
@@ -123,9 +132,11 @@ if video_file is not None:
             strict_val = st.slider(
                 "Trimming Strictness", min_value=0, value=fps
             )  # number of frames prior to keep if current frame is to be kept
-            sharpen = st.checkbox("Sharpen Video")
-            color_grade = st.checkbox("Color Grade Video")
-            yt_link = st.text_input("Enter a Youtube Audio Link")
+            # sharpen = st.checkbox("Sharpen Video")
+            # color_grade = st.checkbox("Color Grade Video")
+            # audio = st.radio("Add Audio", ("No audio", "Default", "Youtube"), index=1)
+            audio = st.radio("Add Audio", ("No audio", "Default"), index=1)
+            # yt_link = st.text_input("Enter a Youtube Audio Link")
 
             # Every form must have a submit button.
             submitted = st.form_submit_button("Submit Advanced Options")
@@ -185,7 +196,7 @@ if video_file is not None:
                 ifps,
                 num_frames,
             )
-            st.write(len(filtered_idx) / len(area_scores))
+            st.write(len(filtered_idx) / num_frames)
             st.write(len(filtered_idx))
 
         with st.spinner(text="YOEO working its magic: Trimming ..."):
@@ -198,12 +209,28 @@ if video_file is not None:
             )
             filter_video(video_path, video_trimmed_filename, filtered_idx)
 
-            os.system(
-                "ffmpeg -i {} -vcodec libx264 {}".format(
+            # recode video and add audio
+            audio_file = "./results/media/Retreat.mp3"
+            if audio == "No audio":
+                os.system(
+                    "ffmpeg -i {}  -vcodec libx264 {}".format(
+                        video_trimmed_filename, video_trimmed_recode_filename
+                    )
+                )
+            # elif audio == "Youtube" and yt_link is not None:
+            #     add_audio(
+            #         audio_file,
+            #         video_trimmed_filename,
+            #         video_trimmed_recode_filename,
+            #         yt_link,
+            #     )
+            else:  # default
+                add_audio(
+                    audio_file,
                     video_trimmed_filename,
                     video_trimmed_recode_filename,
+                    temp_path,
                 )
-            )
             os.remove(video_trimmed_filename)
 
         tab_od, tab_trim, tab_beauty = st.tabs(
@@ -238,9 +265,13 @@ if video_file is not None:
             st.subheader("YOEO's Beautiful Photos:")
 
         # remove recoded video to save space as it is not needed anymore
-        # REMOVE OTHER VIDEOS!
+        # REMOVE OTHER VIDEOS! REMEMBER TO DO SHUTIL RMTREE!!!
         os.remove(video_bbox_recode_filename)
+        os.remove(video_trimmed_recode_filename)
         st.write(os.listdir(temp_path))
+
+        allfiles = get_all_files(temp_path)
+        st.write(allfiles)
 
 
 with st.expander("About YOEO"):
