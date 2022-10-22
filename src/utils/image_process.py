@@ -103,55 +103,75 @@ def do_we_need_to_sharpen(image):
     else:
         return False
 
+def sharpen_my_image(img, threshold = 100):
+  '''
+  This function sharpens the image until the variance of Laplacian is 100.
+  '''
+  kernel_centres = list(range(5, 100))
 
-def sharpen_image(input_path, output_path, plot=False):
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    filename = (os.path.split(input_path)[-1]).split(".")[0]
-
-    kernel_centres = list(range(5, 100))
-
-    image = cv2.imread(input_path)
-
-    if do_we_need_to_sharpen(image) == True:
-        print("Image needs sharpening")
-        for kernel_centre in kernel_centres:
-            out_image = None
-            sharpen = np.array([[0, -1, 0], [-1, kernel_centre, -1], [0, -1, 0]])
-            sharp = cv2.filter2D(image, -1, sharpen)
-
-            if do_we_need_to_sharpen(sharp) == False:
-                out_image = sharp
-                break
-
-        out = (
-            output_path
-            + "/"
-            + filename
-            + dt.now().strftime("%Y%m%d_%H%M")
-            + "_sharpened.jpg"
-        )
-
-        cv2.imwrite(out, sharp)
+  for kernel_centre in kernel_centres:
+    out_image = None
+    sharpen = np.array([
+        [0, -1, 0], 
+        [-1, kernel_centre, -1], 
+        [0, -1, 0]])
     
-    else: print('Image does not need sharpening')
+    sharp = cv2.filter2D(img, -1, sharpen)
+    if cv2.Laplacian(sharp, cv2.CV_64F).var() > threshold:
+      out_image = sharp
+      break
 
-    if plot == True:
-        if do_we_need_to_sharpen(image) == True:
-            fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(15, 5))
-            ax[0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-            ax[0].set(
-                title=f"Original image: Variance of Laplacian:{cv2.Laplacian(image, cv2.CV_64F).var():.3f}"
-            )
-            ax[0].axis("off")
-            ax[1].imshow(cv2.cvtColor(out_image, cv2.COLOR_BGR2RGB))
-            ax[1].set(
-                title=f"Sharpened image: Variance of Laplacian:{cv2.Laplacian(out_image, cv2.CV_64F).var():.3f}"
-            )
-            ax[1].axis("off")
+  return out_image
 
-        else:
-            plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-            plt.title("Original image")
-            plt.axis("off")
+# def sharpen_image(input_path, output_path, plot=False):
+    
+#     if not os.path.exists(output_path):
+#         os.makedirs(output_path)
+
+#     filename = (os.path.split(input_path)[-1]).split(".")[0]
+
+#     kernel_centres = list(range(5, 100))
+
+#     image = cv2.imread(input_path)
+
+#     if do_we_need_to_sharpen(image) == True:
+#         print("Image needs sharpening")
+#         for kernel_centre in kernel_centres:
+#             out_image = None
+#             sharpen = np.array([[0, -1, 0], [-1, kernel_centre, -1], [0, -1, 0]])
+#             sharp = cv2.filter2D(image, -1, sharpen)
+
+#             if do_we_need_to_sharpen(sharp) == False:
+#                 out_image = sharp
+#                 break
+
+#         out = (
+#             output_path
+#             + "/"
+#             + filename
+#             + dt.now().strftime("%Y%m%d_%H%M")
+#             + "_sharpened.jpg"
+#         )
+
+#         cv2.imwrite(out, sharp)
+    
+#     else: print('Image does not need sharpening')
+
+#     if plot == True:
+#         if do_we_need_to_sharpen(image) == True:
+#             fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(15, 5))
+#             ax[0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+#             ax[0].set(
+#                 title=f"Original image: Variance of Laplacian:{cv2.Laplacian(image, cv2.CV_64F).var():.3f}"
+#             )
+#             ax[0].axis("off")
+#             ax[1].imshow(cv2.cvtColor(out_image, cv2.COLOR_BGR2RGB))
+#             ax[1].set(
+#                 title=f"Sharpened image: Variance of Laplacian:{cv2.Laplacian(out_image, cv2.CV_64F).var():.3f}"
+#             )
+#             ax[1].axis("off")
+
+#         else:
+#             plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+#             plt.title("Original image")
+#             plt.axis("off")
