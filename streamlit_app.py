@@ -1,5 +1,6 @@
 import streamlit as st
 import cv2
+import numpy as np
 import os
 import sys
 import tempfile
@@ -13,7 +14,7 @@ import torch.nn as nn
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from src.utils.streamlit import save_uploaded_file, factors, get_all_files
+from src.utils.streamlit import save_uploaded_file, factors, get_all_files, make_grid
 from src.utils.yolox_process import video_predict
 from src.utils.scoring_frames import (
     scores_over_all_frames,
@@ -196,6 +197,7 @@ if video_file is not None:
                 ifps,
                 num_frames,
             )
+            beauti_idx = np.random.choice(filtered_idx, size=6, replace=False)
             st.write(len(filtered_idx) / num_frames)
             st.write(len(filtered_idx))
 
@@ -207,7 +209,9 @@ if video_file is not None:
             video_trimmed_recode_filename = video_trimmed_filename.replace(
                 ".mp4", "_recoded.mp4"
             )
-            filter_video(video_path, video_trimmed_filename, filtered_idx)
+            beauti_img = filter_video(
+                video_path, video_trimmed_filename, filtered_idx, beauti_idx
+            )
 
             # recode video and add audio
             audio_file = "./results/media/Retreat.mp3"
@@ -262,7 +266,11 @@ if video_file is not None:
             st.write(allfiles)
 
         with tab_beauty:
-            st.subheader("YOEO's Beautiful Photos:")
+            st.subheader("Your Beautiful Photos:")
+            row, col = 3, 2
+            mygrid = make_grid(row, col)
+            for idx, img in enumerate(beauti_img):
+                mygrid[idx // col][idx % col].image(img, channels="BGR")
 
         # remove recoded video to save space as it is not needed anymore
         # REMOVE OTHER VIDEOS! REMEMBER TO DO SHUTIL RMTREE!!!
