@@ -88,5 +88,88 @@ def get_top_n_idx(filtered_scores, filtered_idx, sampling_size=0.1, n=10):
     return top_n_idx
 
 
-def beautify():
-    pass
+def beautify(image_directory, indices, output_path, manual=False, filter = 'hudson'):
+  '''
+  Beautifies selected images.
+  Input arguments:
+  1) image_directory - directory where images are stored
+  2) indices - indices for the images to edit
+  3) output_path - path to export images
+  4) manual - users can manually beautify their images using 
+  instagram filters
+  5) The default filter is Hudson.
+
+  List of Instagram filters: https://github.com/akiomik/pilgram/tree/master/pilgram
+  '''
+  if not os.path.exists(output_path):
+    os.makedirs(output_path)
+  
+  imgs = [os.listdir(image_directory)[i] for i in indices]
+
+  try:
+    filter = getattr(pilgram, filter)
+    
+  except:
+    print("""
+    That was not a correct filter. The list of correct filters are:
+    _1977
+    aden
+    brannan
+    brooklyn
+    clarendon
+    earlybird
+    gingham
+    hudson
+    inkwell
+    kelvin
+    lark
+    lofi
+    maven
+    mayfair
+    moon
+    nashville
+    perpetua
+    reyes
+    rise
+    slumber
+    stinson
+    toaster
+    valencia
+    walden
+    willow
+    xpro2
+    Here's some showcases of filtered images:
+    https://github.com/akiomik/pilgram/blob/master/screenshots/screenshot.png
+    """)
+
+  for img_name in imgs:
+    input_path = os.path.join(image_directory, img_name)
+    filename = img_name.split(".")[0]
+
+    img_p = Image.open(input_path)
+    
+    if not manual:
+      img = cv2.imread(input_path)
+
+      ## Check and sharpen ##
+      if do_we_need_to_sharpen(img)==True:
+        img = sharpen_my_image(img)
+
+      ## Check and adjust brightness ##
+      if brightness(img_p) <=90:
+        img = cv2.convertScaleAbs(img, beta=95-brightness(img))
+      elif brightness(img_p)>100:
+        img = cv2.convertScaleAbs(img, beta=95-brightness(img))
+      
+      ## Reduce blue light ##
+      img = Summer(img)
+      cv2.imwrite(f'{output_path}/{filename}_enhanced.png')
+
+      ## Icing on the cake ##
+      img = Image.open(f'{output_path}/{filename}_enhanced.png')
+      filter(img).save(f'{output_path}/{filename}_enhanced.jpg')
+
+    else:
+      filter(img).save(f'{output_path}/{filename}_enhanced.jpg')
+
+  print('Image beautified! Enjoy!')
