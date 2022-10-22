@@ -65,7 +65,7 @@ def video_stitch(
     return out_vid_path
 
 
-def filter_video(video_path, out_path, filtered_idx, remove_orig=True):
+def filter_video(video_path, out_path, filtered_idx, beauti_idx, remove_orig=True):
     cap = cv2.VideoCapture(video_path)
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
@@ -79,11 +79,14 @@ def filter_video(video_path, out_path, filtered_idx, remove_orig=True):
         (int(width), int(height)),
     )
 
+    beauti_img = []
     idx = 0
     while True:
         success, img = cap.read()
         if success and (idx in filtered_idx):
             vid_writer.write(img)
+        if success and (idx in beauti_idx):
+            beauti_img.append(img)
         idx += 1
 
         if idx > num_frames:
@@ -94,6 +97,8 @@ def filter_video(video_path, out_path, filtered_idx, remove_orig=True):
 
     if remove_orig:
         os.remove(video_path)
+
+    return beauti_img
 
 
 def add_audio(audio_file, video_file, output_path, temp_path, youtube_url=False):
