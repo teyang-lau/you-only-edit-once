@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 import youtube_dl
 import librosa
-import ffmpeg
 from pydub import AudioSegment
 
 # import soundfile as sf
@@ -97,7 +96,7 @@ def filter_video(video_path, out_path, filtered_idx, remove_orig=True):
         os.remove(video_path)
 
 
-def moviemaker(audio_file, video_file, output_path, youtube_url=False):
+def add_audio(audio_file, video_file, output_path, youtube_url=False):
     """
     Creates a movie depending with the duration equivalent to the shortest duration
     between audio and video files.
@@ -157,8 +156,12 @@ def moviemaker(audio_file, video_file, output_path, youtube_url=False):
         sound_clip = sound[first_cut_point:last_cut_point]
         sound_clip.export(audio_file, format="wav")
 
-    input_video = ffmpeg.input(video_file)
-    input_audio = ffmpeg.input(audio_file)
-    ffmpeg.concat(input_video, input_audio, v=1, a=1).output(output_path).run()
+    # input_video = ff.input(video_file)
+    # input_audio = ff.input(audio_file)
+    # ff.concat(input_video, input_audio, v=1, a=1).output(output_path).run()
 
-    print("Movie made! Congratulations!")
+    os.system(
+        "ffmpeg -i {} -i {} -vcodec libx264 {}".format(
+            video_file, audio_file, output_path
+        )
+    )
