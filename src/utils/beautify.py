@@ -15,7 +15,7 @@ import pilgram
 from PIL import Image,ImageFilter, ImageStat
 import numpy as np
 
-from src.utils.image_process import do_we_need_to_sharpen, sharpen_my_image
+from src.utils.image_process import *
 
 def get_top_frames(scores, num, fps, dispersed=True):
     """
