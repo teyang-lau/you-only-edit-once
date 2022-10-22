@@ -63,7 +63,9 @@ YOEO_CLASSES = (
     "turtle",
     "manta ray",
 )
-
+__, col, __ = st.columns([1, 2, 1])
+with col:
+    st.image("./results/media/you-only-edit-once-logo.png")
 
 ##STEP 1 Load Model
 with st.spinner(text="Loading Model ... Please be patient!"):
@@ -73,7 +75,13 @@ with st.spinner(text="Loading Model ... Please be patient!"):
 st.write("# Upload diving video:\n")
 
 with st.expander("How to Use YOEO"):
-    st.write("............")
+    instruct = """
+    1. Upload a diving video 
+    2. Select the flora & fauna you want to see in your video
+    3. (Optional): Adjust the advanced options for better fine-tuning
+    4. Click "Start Auto-Trimming" and let the magic begin! 
+    """
+    st.write(instruct)
 
 
 # create temp dir for storing video and outputs
@@ -86,9 +94,7 @@ video_file = st.file_uploader(
 
 if video_file is not None:
     file_details = {"FileName": video_file.name, "FileType": video_file.type}
-    st.write(file_details)
     video_path = save_uploaded_file(video_file, temp_path)
-    st.write(video_path)
     video_bbox_filename = os.path.join(temp_path, video_file.name)
     # get fps for optimization slider max value
     fps = round(cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FPS))
@@ -143,8 +149,18 @@ if video_file is not None:
                 st.write("Optimization", ifps, "strict_val", strict_val)
 
     # start inferencing
+    # background-color: #00cc00
+    st.markdown(
+        """<style>
+        .row-widget.stButton:nth-of-type(1) button {
+            color:black; font-weight: bold; font-size:20px; height:3em;
+            width:15em; border-radius:10px 10px 10px 10px;
+        }
+        </style>""",
+        unsafe_allow_html=True,
+    )
+
     trim_bt = st.button("Start Auto-Trimming!")
-    st.write(trim_bt)
     if trim_bt:
         with st.spinner(
             text="YOEO working its magic: OBJECT DETECTION IN PROGRESS ..."
@@ -276,28 +292,26 @@ if video_file is not None:
 
 
 with st.expander("About YOEO"):
-    st.write(
-        "YOEO (You Only Edit Once) is an object detection model and web application created by data scientists and AI practitioners who are diving enthusiasts!"
-    )
-    st.write("The Model is trained on ...")
+    __, col2, __ = st.columns([1, 1, 1])
+    with col2:
+        st.image("./results/media/you-only-edit-once-logo.png")
 
-
-##STEP 3
-# st.write("# 3. YOEO working its magic: ")
-# st.write("-> to insert model inference and stich algo in progress bar")
-# my_bar = st.progress(0)
-
-# for percent_complete in range(100):
-#     time.sleep(0.1)
-#     my_bar.progress(percent_complete + 1)
-
-
-##STEP 4
-# st.write("# 4. Objects of interest detected and trimmed video output: ")
-
-# col1, col2, col3 = st.columns(3)
-# col1.metric("# Species Detected", "2")
-# col2.metric("Turtle", "1")
-# col3.metric("Fish", "23")
-
-# st.video(vid_file)
+    about = """
+    **[YOEO (You Only Edit Once)](https://github.com/teyang-lau/you-only-edit-once)** is an AI diving object detection model and diving 
+    video trimming web application created by data scientists and 
+    AI practitioners who are diving enthusiasts!
+    
+    **Created by:**
+    * HE Xinyi
+    * LAU TeYang
+    * LI Zihao
+    * LIM Hsien Yong
+    * YAN Licheng
+    """
+    st.write(about)
+    st.write("")
+    model_text = """
+    The Model is trained on ~500 fully annotated images from raw diving videos using
+    [YOLOX-Nano](https://github.com/Megvii-BaseDetection/YOLOX) for 300 epochs.
+    """
+    st.markdown(model_text)
