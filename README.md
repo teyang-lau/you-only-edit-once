@@ -9,10 +9,9 @@
 </div>
 
 <p align="center">
-  <img src="results\others\DALL·E 2022-10-12 14.41.18 - robot nemo swimming in ocean  .png " width="300">
+  <img src="results\media\you-only-edit-once-logo.svg" width="300">
 </p>
 <br>
-
 
 ## <div align="center">Project Directory Structure</div>
 
