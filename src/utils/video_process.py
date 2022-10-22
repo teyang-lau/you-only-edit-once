@@ -96,7 +96,7 @@ def filter_video(video_path, out_path, filtered_idx, remove_orig=True):
         os.remove(video_path)
 
 
-def add_audio(audio_file, video_file, output_path, youtube_url=False):
+def add_audio(audio_file, video_file, output_path, temp_path, youtube_url=False):
     """
     Creates a movie depending with the duration equivalent to the shortest duration
     between audio and video files.
@@ -105,6 +105,7 @@ def add_audio(audio_file, video_file, output_path, youtube_url=False):
     If youtube_url = True, this can be set to None
     video_file: Path to the .mp4 file. This is required.
     output_path: This is required.
+    temp_path: temp path to store truncated/extend audio
     youtube_url: The default is set to False
     """
     # Download audio from YouTube
@@ -141,7 +142,7 @@ def add_audio(audio_file, video_file, output_path, youtube_url=False):
     video_duration = frames / fps
 
     if audio_duration > video_duration:
-        audio_file = "./audio_truncated.wav"
+        audio_file = os.path.join(temp_path, "audio_truncated.wav")
         first_cut_point = (0) * 1000  # miliseconds
         last_cut_point = round(video_duration) * 1000
         sound_clip = sound[first_cut_point:last_cut_point]
@@ -149,7 +150,7 @@ def add_audio(audio_file, video_file, output_path, youtube_url=False):
 
     else:
         clone = video_duration // audio_duration + 1
-        audio_file = "./audio_extended.wav"
+        audio_file = os.path.join(temp_path, "audio_extended.wav")
         sound *= clone  # the audio file is now longer than the video file
         first_cut_point = (0) * 1000
         last_cut_point = round(video_duration) * 1000
