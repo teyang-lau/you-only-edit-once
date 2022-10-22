@@ -22,6 +22,7 @@ from src.utils.scoring_frames import (
     filter_area,
 )
 from src.utils.video_process import filter_video, add_audio
+from src.utils.beautify import get_top_n_idx
 from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
@@ -42,7 +43,6 @@ def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
     model.apply(init_yolo)
     model.head.initialize_biases(1e-2)
     model.eval()
-    # model
 
     ckpt = torch.load(ckpt_file, map_location="cpu")
     # load the model state dict
@@ -52,8 +52,6 @@ def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
 
 
 MODEL_PATH = "./results/models/yolox_dive.pth"
-# MODEL_NAME = "yolox-nano"
-# EXP_PATH = "./exps/example/custom/nano.py"
 MODEL_INPUT_SIZE = (640, 640)  # width, height
 NUM_CLASSES = 5
 CONF_THRESHOLD = 0.25
@@ -180,7 +178,6 @@ if video_file is not None:
 
             # remove obj detect video to save space
             os.remove(video_bbox_filename)
-            st.write(os.listdir(temp_path))
 
             # score frames
             area_scores, count_scores, marine_mask = scores_over_all_frames(
@@ -197,9 +194,13 @@ if video_file is not None:
                 ifps,
                 num_frames,
             )
-            beauti_idx = np.random.choice(filtered_idx, size=6, replace=False)
-            st.write(len(filtered_idx) / num_frames)
-            st.write(len(filtered_idx))
+            # get top n indices of frames with highest scores
+            beauti_idx = get_top_n_idx(
+                filtered_scores, filtered_idx, sampling_size=0.1, n=10
+            )
+            # beauti_idx = np.random.choice(filtered_idx, size=6, replace=False)
+            st.write("Proportion of filtered frames:", len(filtered_idx) / num_frames)
+            st.write("Number of filtered frames:", len(filtered_idx))
 
         with st.spinner(text="YOEO working its magic: Trimming ..."):
             # run through video and filter video
@@ -245,9 +246,6 @@ if video_file is not None:
             ]
         )
         with tab_od:
-            st.write(video_bbox_filename)
-            # st.write(os.listdir(os.path.join(RESULTS_PATH, latest_folder)))
-            st.write(video_bbox_recode_filename)
             st.subheader("YOEO's Object Detection Results:")
             st.video(video_bbox_recode_filename)
 
@@ -259,15 +257,11 @@ if video_file is not None:
 
         with tab_trim:
             st.subheader("YOEO's Trimmed Video:")
-            st.write((video_trimmed_recode_filename))
             st.video(video_trimmed_recode_filename)
-            st.write(os.listdir(temp_path))
-            allfiles = get_all_files(temp_path)
-            st.write(allfiles)
 
         with tab_beauty:
             st.subheader("Your Beautiful Photos:")
-            row, col = 3, 2
+            row, col = 5, 2
             mygrid = make_grid(row, col)
             for idx, img in enumerate(beauti_img):
                 mygrid[idx // col][idx % col].image(img, channels="BGR")
@@ -276,7 +270,6 @@ if video_file is not None:
         # REMOVE OTHER VIDEOS! REMEMBER TO DO SHUTIL RMTREE!!!
         os.remove(video_bbox_recode_filename)
         os.remove(video_trimmed_recode_filename)
-        st.write(os.listdir(temp_path))
 
         allfiles = get_all_files(temp_path)
         st.write(allfiles)
