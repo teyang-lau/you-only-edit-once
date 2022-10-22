@@ -2,8 +2,20 @@
 Beautify Images Utils
 """
 
+import os
+import random
+import operator
+
+import heapq
+import math
+from scipy.interpolate import UnivariateSpline
+
+import cv2
+import pilgram
+from PIL import Image,ImageFilter, ImageStat
 import numpy as np
 
+from src.utils.image_process import do_we_need_to_sharpen, sharpen_image
 
 def get_top_frames(scores, num, fps, dispersed=True):
     """
@@ -87,6 +99,37 @@ def get_top_n_idx(filtered_scores, filtered_idx, sampling_size=0.1, n=10):
 
     return top_n_idx
 
+def brightness(im_file):
+  '''
+  Returns perceived brightness of image
+  https://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
+  '''
+  im = Image.open(im_file)
+  stat = ImageStat.Stat(im)
+  r,g,b = stat.mean
+  return math.sqrt(0.241*(r**2) + 0.691*(g**2) + 0.068*(b**2))
+
+def LookupTable(x, y):
+  spline = UnivariateSpline(x, y)
+  return spline(range(256))
+
+def Summer(img):
+    increaseLookupTable = LookupTable([0, 64, 128, 256], [0, 80, 160, 256])
+    decreaseLookupTable = LookupTable([0, 64, 128, 256], [0, 50, 100, 256])
+    blue_channel, green_channel,red_channel  = cv2.split(img)
+    red_channel = cv2.LUT(red_channel, increaseLookupTable).astype(np.uint8)
+    blue_channel = cv2.LUT(blue_channel, decreaseLookupTable).astype(np.uint8)
+    sum= cv2.merge((blue_channel, green_channel, red_channel ))
+    return sum
+
+def Winter(img):
+    increaseLookupTable = LookupTable([0, 64, 128, 256], [0, 80, 160, 256])
+    decreaseLookupTable = LookupTable([0, 64, 128, 256], [0, 50, 100, 256])
+    blue_channel, green_channel,red_channel = cv2.split(img)
+    red_channel = cv2.LUT(red_channel, decreaseLookupTable).astype(np.uint8)
+    blue_channel = cv2.LUT(blue_channel, increaseLookupTable).astype(np.uint8)
+    win= cv2.merge((blue_channel, green_channel, red_channel))
+    return win
 
 def beautify(image_directory, indices, output_path, manual=False, filter = 'hudson'):
   '''
