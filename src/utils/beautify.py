@@ -15,7 +15,7 @@ import pilgram
 from PIL import Image,ImageFilter, ImageStat
 import numpy as np
 
-from src.utils.image_process import do_we_need_to_sharpen, sharpen_image
+from src.utils.image_process import do_we_need_to_sharpen, sharpen_my_image
 
 def get_top_frames(scores, num, fps, dispersed=True):
     """
@@ -104,7 +104,7 @@ def brightness(im_file):
   Returns perceived brightness of image
   https://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
   '''
-  stat = ImageStat.Stat(im)
+  stat = ImageStat.Stat(im_file)
   r,g,b = stat.mean
   return math.sqrt(0.241*(r**2) + 0.691*(g**2) + 0.068*(b**2))
 
@@ -140,7 +140,6 @@ def beautify(image_directory, indices, output_path, manual=False, filter = 'huds
   4) manual - users can manually beautify their images using 
   instagram filters
   5) The default filter is Hudson.
-
   List of Instagram filters: https://github.com/akiomik/pilgram/tree/master/pilgram
   '''
   if not os.path.exists(output_path):
@@ -196,7 +195,7 @@ def beautify(image_directory, indices, output_path, manual=False, filter = 'huds
 
       ## Check and sharpen ##
       if do_we_need_to_sharpen(img)==True:
-        img = sharpen_image(img)
+        img = sharpen_my_image(img)
       
       ## Check and adjust brightness ##
       if lux <=90:
