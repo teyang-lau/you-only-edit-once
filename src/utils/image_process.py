@@ -90,7 +90,7 @@ def auto_white_balance(img):
 
 def do_we_need_to_sharpen(image):
     """
-    The focus of an image is defined by the variance of Laplacian. We've set the default to 1000.
+    The focus of an image is defined by the variance of Laplacian. We've set the default to 100.
     This is equivalent to taking a photo using a very good camera.
 
     Reference:
@@ -98,7 +98,7 @@ def do_we_need_to_sharpen(image):
 
     """
     var = cv2.Laplacian(image, cv2.CV_64F).var()
-    if var <= 1000:  # tentative threshold, can change.
+    if var <= 100:  # tentative threshold, can change.
         return True
     else:
         return False
