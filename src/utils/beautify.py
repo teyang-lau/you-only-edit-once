@@ -213,6 +213,6 @@ def beautify(image_directory, indices, output_path, manual=False, filter = 'huds
       pilgram.hudson(img).save(f'{output_path}/{filename}_enhanced.jpg')
 
     else:
-      filter(img).save(f'{output_path}/{filename}_enhanced.jpg')
+      filter(img_p).save(f'{output_path}/{filename}_enhanced.jpg')
 
   print('Image beautified! Enjoy!')
