@@ -71,7 +71,7 @@ def automatic_brightness_and_contrast(image, clip_hist_percent=1):
     """
 
     auto_result = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
-    return (auto_result, alpha, beta)
+    return auto_result
 
 
 def auto_white_balance(img):
@@ -88,7 +88,7 @@ def auto_white_balance(img):
     return result
 
 
-def do_we_need_to_sharpen(image, threshold = 100):
+def do_we_need_to_sharpen(image, threshold=50):
     """
     The focus of an image is defined by the variance of Laplacian. We've set the default to 100.
     This is equivalent to taking a photo using a very good camera.
@@ -98,33 +98,32 @@ def do_we_need_to_sharpen(image, threshold = 100):
 
     """
     var = cv2.Laplacian(image, cv2.CV_64F).var()
-    if var <= threshold:  
+    if var <= threshold:
         return True
     else:
         return False
 
-def sharpen_my_image(img, threshold = 100):
-  '''
-  This function sharpens the image until the variance of Laplacian is 100.
-  '''
-  kernel_centres = list(range(5, 100))
 
-  for kernel_centre in kernel_centres:
-    out_image = None
-    sharpen = np.array([
-        [0, -1, 0], 
-        [-1, kernel_centre, -1], 
-        [0, -1, 0]])
-    
-    sharp = cv2.filter2D(img, -1, sharpen)
-    if cv2.Laplacian(sharp, cv2.CV_64F).var() > threshold:
-      out_image = sharp
-      break
+def sharpen_my_image(img, threshold=50):
+    """
+    This function sharpens the image until the variance of Laplacian is 100.
+    """
+    kernel_centres = list(range(5, 100))
 
-  return out_image
+    for kernel_centre in kernel_centres:
+        out_image = None
+        sharpen = np.array([[0, -1, 0], [-1, kernel_centre, -1], [0, -1, 0]])
+
+        sharp = cv2.filter2D(img, -1, sharpen)
+        if cv2.Laplacian(sharp, cv2.CV_64F).var() > threshold:
+            out_image = sharp
+            break
+
+    return out_image
+
 
 # def sharpen_image(input_path, output_path, plot=False):
-    
+
 #     if not os.path.exists(output_path):
 #         os.makedirs(output_path)
 
@@ -154,7 +153,7 @@ def sharpen_my_image(img, threshold = 100):
 #         )
 
 #         cv2.imwrite(out, sharp)
-    
+
 #     else: print('Image does not need sharpening')
 
 #     if plot == True:
