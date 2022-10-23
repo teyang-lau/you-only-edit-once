@@ -172,6 +172,8 @@ def add_audio(audio_file, video_file, output_path, temp_path, youtube_url=False)
         )
     )
 
+    os.remove(audio_file)
+
 
 def main():
     pass
