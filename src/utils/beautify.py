@@ -17,7 +17,7 @@ import numpy as np
 from src.utils.image_process import (
     do_we_need_to_sharpen,
     sharpen_my_image,
-    automatic_brightness_and_contrast,
+    adjust_contrast_brightness,
 )
 
 
@@ -193,8 +193,15 @@ def beautify(beauti_img, filter="hudson"):
         if filter and filter.lower() == "hudson":
             img = Summer(img)
 
-        ## Automatic brightness and contrast ##
-        img = automatic_brightness_and_contrast(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        # Adjust brightness and contrast
+        lux = brightness(Image.fromarray(img))
+        if lux <= 130:
+            beta = 137.5 - lux
+        elif lux > 145:
+            beta = 137.5 - lux
+        else:
+            beta = 0
+        img = adjust_contrast_brightness(img, contrast=1.2, brightness=beta)
 
         ## Check and sharpen ##
         if do_we_need_to_sharpen(img):
@@ -202,9 +209,7 @@ def beautify(beauti_img, filter="hudson"):
 
         ## Apply instagram filter ##
         if filter:
-            img = pilgram_filter(Image.fromarray(img))
-        else:
-            img = Image.fromarray(img)
+            img = np.array(pilgram_filter(Image.fromarray(img)))
 
         beauti_img[idx] = img
 
