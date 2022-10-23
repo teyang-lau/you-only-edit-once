@@ -2,7 +2,6 @@
 Beautify Images Utils
 """
 
-import os
 import random
 import operator
 
@@ -12,10 +11,15 @@ from scipy.interpolate import UnivariateSpline
 
 import cv2
 import pilgram
-from PIL import Image,ImageFilter, ImageStat
+from PIL import Image, ImageStat
 import numpy as np
 
-from src.utils.image_process import *
+from src.utils.image_process import (
+    do_we_need_to_sharpen,
+    sharpen_my_image,
+    automatic_brightness_and_contrast,
+)
+
 
 def get_top_frames(scores, num, fps, dispersed=True):
     """
@@ -99,60 +103,118 @@ def get_top_n_idx(filtered_scores, filtered_idx, sampling_size=0.1, n=10):
 
     return top_n_idx
 
+
 def brightness(im_file):
-  '''
-  Returns perceived brightness of image
-  https://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
-  '''
-  stat = ImageStat.Stat(im_file)
-  r,g,b = stat.mean
-  return math.sqrt(0.241*(r**2) + 0.691*(g**2) + 0.068*(b**2))
+    """
+    Returns perceived brightness of image
+    https://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
+    """
+    stat = ImageStat.Stat(im_file)
+    r, g, b = stat.mean
+    return math.sqrt(0.241 * (r**2) + 0.691 * (g**2) + 0.068 * (b**2))
+
 
 def LookupTable(x, y):
-  spline = UnivariateSpline(x, y)
-  return spline(range(256))
+    spline = UnivariateSpline(x, y)
+    return spline(range(256))
+
 
 def Summer(img):
     increaseLookupTable = LookupTable([0, 64, 128, 256], [0, 80, 160, 256])
     decreaseLookupTable = LookupTable([0, 64, 128, 256], [0, 50, 100, 256])
-    blue_channel, green_channel,red_channel  = cv2.split(img)
+    blue_channel, green_channel, red_channel = cv2.split(img)
     red_channel = cv2.LUT(red_channel, increaseLookupTable).astype(np.uint8)
     blue_channel = cv2.LUT(blue_channel, decreaseLookupTable).astype(np.uint8)
-    sum= cv2.merge((blue_channel, green_channel, red_channel ))
+    sum = cv2.merge((blue_channel, green_channel, red_channel))
     return sum
+
 
 def Winter(img):
     increaseLookupTable = LookupTable([0, 64, 128, 256], [0, 80, 160, 256])
     decreaseLookupTable = LookupTable([0, 64, 128, 256], [0, 50, 100, 256])
-    blue_channel, green_channel,red_channel = cv2.split(img)
+    blue_channel, green_channel, red_channel = cv2.split(img)
     red_channel = cv2.LUT(red_channel, decreaseLookupTable).astype(np.uint8)
     blue_channel = cv2.LUT(blue_channel, increaseLookupTable).astype(np.uint8)
-    win= cv2.merge((blue_channel, green_channel, red_channel))
+    win = cv2.merge((blue_channel, green_channel, red_channel))
     return win
 
-def beautify(image_directory, indices, output_path, manual=False, filter = 'hudson'):
-  '''
-  Beautifies selected images.
-  Input arguments:
-  1) image_directory - directory where images are stored
-  2) indices - indices for the images to edit
-  3) output_path - path to export images
-  4) manual - users can manually beautify their images using 
-  instagram filters
-  5) The default filter is Hudson.
-  List of Instagram filters: https://github.com/akiomik/pilgram/tree/master/pilgram
-  '''
-  if not os.path.exists(output_path):
-    os.makedirs(output_path)
-  
-  imgs = [os.listdir(image_directory)[i] for i in indices]
 
-  try:
-    filter = getattr(pilgram, filter)
-    
-  except:
-    print("""
-    That was not a correct filter. The list of correct filters are:
+def beautify(beauti_img, filter="hudson"):
+    """
+    Beautifies selected images.
+    Input arguments:
+    1) beauti_img (np.array) - array of images in cv2/BGR format
+    2) filter (str) - instagram filter to apply
+    3) The default filter is Hudson.
+    List of Instagram filters: https://github.com/akiomik/pilgram/tree/master/pilgram
+    """
+    if filter:
+        try:
+            pilgram_filter = getattr(pilgram, filter.lower())
+
+        except:
+            raise ValueError(
+                """
+        That was not a correct filter. The list of correct filters are:
+        _1977
+        aden
+        brannan
+        brooklyn
+        clarendon
+        earlybird
+        gingham
+        hudson
+        inkwell
+        kelvin
+        lark
+        lofi
+        maven
+        mayfair
+        moon
+        nashville
+        perpetua
+        reyes
+        rise
+        slumber
+        stinson
+        toaster
+        valencia
+        walden
+        willow
+        xpro2
+        Here's some showcases of filtered images:
+        https://github.com/akiomik/pilgram/blob/master/screenshots/screenshot.png
+        """
+            )
+
+    for idx, img in enumerate(beauti_img):
+
+        ## Reduce blue light ##
+        if filter and filter.lower() == "hudson":
+            img = Summer(img)
+
+        ## Automatic brightness and contrast ##
+        img = automatic_brightness_and_contrast(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+
+        ## Check and sharpen ##
+        if do_we_need_to_sharpen(img):
+            img = sharpen_my_image(img)
+
+        ## Apply instagram filter ##
+        if filter:
+            img = pilgram_filter(Image.fromarray(img))
+        else:
+            img = Image.fromarray(img)
+
+        beauti_img[idx] = img
+
+    return beauti_img
+
+
+def check_filter(filter):
+
+    error_msg = """
+    That was not a correct filter. The list of correct filters are: \n
     _1977
     aden
     brannan
@@ -179,40 +241,13 @@ def beautify(image_directory, indices, output_path, manual=False, filter = 'huds
     walden
     willow
     xpro2
-    Here's some showcases of filtered images:
+    \nHere's some showcases of filtered images:
     https://github.com/akiomik/pilgram/blob/master/screenshots/screenshot.png
-    """)
+    """
 
-  for img_name in imgs:
-    input_path = os.path.join(image_directory, img_name)
-    filename = img_name.split(".")[0]
+    try:
+        pilgram_filter = getattr(pilgram, filter.lower())
+    except:
+        return False, error_msg
 
-    img_p = Image.open(input_path)
-    lux = brightness(img_p)
-
-    if not manual:
-      img = cv2.imread(input_path)
-
-      ## Check and sharpen ##
-      if do_we_need_to_sharpen(img)==True:
-        img = sharpen_my_image(img)
-      
-      ## Check and adjust brightness ##
-      if lux <=90:
-        img = cv2.convertScaleAbs(img, beta=95-lux)
-        
-      elif lux>100:
-        img = cv2.convertScaleAbs(img, beta=95-lux)
-        
-      ## Reduce blue light ##
-      img = Summer(img)
-      cv2.imwrite(f'{output_path}/{filename}_enhanced.png', img)
-
-      ## Icing on the cake ##
-      img = Image.open(f'{output_path}/{filename}_enhanced.png')
-      filter(img).save(f'{output_path}/{filename}_enhanced.png')
-
-    else:
-      filter(img).save(f'{output_path}/{filename}_enhanced.png')
-
-  print('Image beautified! Enjoy!')
+    return True, error_msg
