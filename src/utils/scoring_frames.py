@@ -3,7 +3,8 @@ Score frames utils
 """
 
 import numpy as np
-from scipy.stats import mode
+import torch
+import torch.nn as nn
 
 
 def bbox_area(bb):
@@ -43,24 +44,41 @@ def all_bbox_unionall_prop_torch(bboxes, origi_shape):
 
 
 def scores_over_all_frames(bbox_class_score, marine_options, origi_shape):
-    area_scores, count_scores, marine_mask = [], [], []
+    area_scores, count_scores, marine_mask, species_count = [], [], [], []
+    species_detected = set()
     for frame in bbox_class_score:
         if len(frame[0]) == 0:
             area_scores.append(0)
             count_scores.append(0)
             marine_mask.append(False)
+            species_count.append(torch.Tensor([0, 0, 0, 0, 0]))
         else:
             area_scores.append(
                 all_bbox_unionall_prop_torch(frame[0], origi_shape).item()
             )
             count_scores.append(frame[1].size()[0])
+            species_in_frame = set(frame[1].numpy().astype("int"))
             marine_mask.append(
-                True
-                if set(frame[1].numpy().astype("int")) & set(marine_options)
-                else False
+                True if species_in_frame & set(marine_options) else False
             )
+            if len(species_detected) != 5:
+                species_detected.update(species_in_frame)
+            s_count = torch.bincount(frame[1].to(torch.uint8))
+            s_count = nn.functional.pad(s_count, (0, 5 - len(s_count)))
+            species_count.append(s_count)
 
-    return np.array(area_scores), np.array(count_scores), np.array(marine_mask)
+    # reorder species
+    species_count = torch.stack(species_count, 0).transpose(0, 1).tolist()
+    reorder = [3, 1, 0, 2, 4]  # [fish, coral, turtle, shark, manta ray]
+    species_count = [s for __, s in sorted(zip(reorder, species_count))]
+
+    return (
+        np.array(area_scores),
+        np.array(count_scores),
+        np.array(marine_mask),
+        species_detected,
+        species_count,
+    )
 
 
 def check_frames(bbox_class_score, marine_options):
@@ -158,7 +176,15 @@ def filter_frames(
 
 
 def filter_area_and_count(
-    area_scores, count_scores, marine_mask, threshold, strictness, fps, ifps, num_frames
+    area_scores,
+    count_scores,
+    marine_mask,
+    threshold,
+    strictness,
+    fps,
+    ifps,
+    num_frames,
+    algo="Area & Count",
 ):
 
     """
@@ -180,14 +206,20 @@ def filter_area_and_count(
 
     """
 
-    # min-max scale
-    area_scores = (area_scores - np.min(area_scores)) / (
-        np.max(area_scores) - np.min(area_scores)
-    )
-    count_scores = (count_scores - np.min(count_scores)) / (
-        np.max(count_scores) - np.min(count_scores)
-    )
-    sum_scores = area_scores + count_scores
+    if algo == "Area & Count":
+        # min-max scale
+        area_scores = (area_scores - np.min(area_scores)) / (
+            np.max(area_scores) - np.min(area_scores)
+        )
+        count_scores = (count_scores - np.min(count_scores)) / (
+            np.max(count_scores) - np.min(count_scores)
+        )
+        sum_scores = area_scores + count_scores
+
+    elif algo == "Area":
+        sum_scores = area_scores
+        threshold = 1 / 25
+
     mask = sum_scores >= threshold
     mask = np.logical_and(mask, marine_mask)
 
@@ -210,10 +242,6 @@ def filter_area_and_count(
     filtered_idx = (adjusted_mask == True).nonzero()
 
     return filtered_scores, filtered_idx[0]
-
-
-def filter_area():
-    pass
 
 
 # def filter_frames(orig_frames, class_mask, frame_scores, threshold, strictness):
