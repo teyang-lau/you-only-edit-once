@@ -68,9 +68,10 @@ def scores_over_all_frames(bbox_class_score, marine_options, origi_shape):
             species_count.append(s_count)
 
     # reorder species
-    species_count = torch.stack(species_count, 0).transpose(0, 1).tolist()
+    species_count = torch.stack(species_count, 0).to(torch.uint8)
+    species_count_reorder = species_count.transpose(0, 1).tolist()
     reorder = [3, 1, 0, 2, 4]  # [fish, coral, turtle, shark, manta ray]
-    species_count = [s for __, s in sorted(zip(reorder, species_count))]
+    species_count_reorder = [s for __, s in sorted(zip(reorder, species_count_reorder))]
 
     return (
         np.array(area_scores),
@@ -78,6 +79,7 @@ def scores_over_all_frames(bbox_class_score, marine_options, origi_shape):
         np.array(marine_mask),
         species_detected,
         species_count,
+        species_count_reorder,
     )
 
 
@@ -177,7 +179,7 @@ def filter_frames(
 
 def filter_area_and_count(
     area_scores,
-    count_scores,
+    species_count,
     marine_mask,
     threshold,
     strictness,
@@ -207,14 +209,24 @@ def filter_area_and_count(
     """
 
     if algo == "Area & Count":
+        # weight area (to be added!)
+        # weight counts according to species
+        weighted_count_scores = torch.matmul(
+            species_count, torch.tensor([10, 1, 1, 10, 10]).to(torch.uint8)
+        ).numpy()
         # min-max scale
         area_scores = (area_scores - np.min(area_scores)) / (
             np.max(area_scores) - np.min(area_scores)
         )
-        count_scores = (count_scores - np.min(count_scores)) / (
-            np.max(count_scores) - np.min(count_scores)
-        )
-        sum_scores = area_scores + count_scores
+        weighted_count_scores = (
+            weighted_count_scores - np.min(weighted_count_scores)
+        ) / (np.max(weighted_count_scores) - np.min(weighted_count_scores))
+        # count_scores = (count_scores - np.min(count_scores)) / (
+        #     np.max(count_scores) - np.min(count_scores)
+        # )
+
+        # sum_scores = area_scores + count_scores
+        sum_scores = area_scores + weighted_count_scores
 
     elif algo == "Area":
         sum_scores = area_scores

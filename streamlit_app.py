@@ -135,7 +135,7 @@ if video_file is not None:
                 "Trimming Strictness",
                 min_value=0,
                 max_value=int(fps * 3),
-                value=0,
+                value=round(fps / 2),
                 help="Keep number of frames before an accepted frame to avoid objects from popping in instantly",
             )  # number of frames prior to keep if current frame is to be kept
             # sharpen = st.checkbox("Sharpen Video")
@@ -162,8 +162,8 @@ if video_file is not None:
 
             # Every form must have a submit button.
             submitted = st.form_submit_button("Submit Advanced Options")
-            if submitted:
-                st.write("Optimization", ifps, "strict_val", strict_val)
+            # if submitted:
+            #     st.write("Optimization", ifps, "strict_val", strict_val)
 
             # check other filter validity
             if other_filter and filter == "Others":
@@ -225,11 +225,12 @@ if video_file is not None:
                 marine_mask,
                 species_detected,
                 species_count,
+                species_count_reorder,
             ) = scores_over_all_frames(bbox_class_score, marine_options, origi_shape)
             # filter scores for each frame
             filtered_scores, filtered_idx = filter_area_and_count(
                 area_scores,
-                count_scores,
+                species_count,
                 marine_mask,
                 1.1,
                 strict_val,
@@ -278,7 +279,7 @@ if video_file is not None:
                     video_trimmed_recode_filename,
                     temp_path,
                 )
-            os.remove(video_trimmed_filename)
+            # os.remove(video_trimmed_filename)
 
         # beautify images
         if other_filter and filter == "Others":
@@ -332,7 +333,7 @@ if video_file is not None:
 
             # streamgraph plot
             with st.container():
-                fig = streamgraph(species_count)
+                fig = streamgraph(species_count_reorder)
                 st.pyplot(fig)
 
         with tab_trim:
