@@ -74,6 +74,16 @@ def automatic_brightness_and_contrast(image, clip_hist_percent=1):
     return auto_result
 
 
+def adjust_contrast_brightness(img, contrast: float = 1.0, brightness: int = 0):
+    """
+    Adjusts contrast and brightness of an uint8 image.
+    contrast:   (0.0,  inf) with 1.0 leaving the contrast as is
+    brightness: [-255, 255] with 0 leaving the brightness as is
+    """
+    brightness += int(round(255 * (1 - contrast) / 2))
+    return cv2.addWeighted(img, contrast, img, 0, brightness)
+
+
 def auto_white_balance(img):
     result = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     avg_a = np.average(result[:, :, 1])
