@@ -25,6 +25,7 @@ executing==1.1.1
 ffmpeg==1.4
 flatbuffers==22.9.24
 fonttools==4.37.4
+future==0.18.2
 gast==0.4.0
 gitdb==4.0.9
 GitPython==3.1.29
@@ -66,7 +67,6 @@ oauthlib==3.2.1
 onnx==1.12.0
 onnxruntime==1.12.1
 opencv-python==4.6.0.66
-# opencv-python-headless
 opt-einsum==3.3.0
 packaging==21.3
 pafy==0.5.5
@@ -74,6 +74,7 @@ pandas==1.5.0
 parso==0.8.3
 pathspec==0.10.1
 pickleshare==0.7.5
+pilgram==1.2.1
 Pillow==9.2.0
 platformdirs==2.5.2
 pooch==1.6.0
@@ -88,6 +89,7 @@ pycocotools==2.0.5
 pycparser==2.21
 pydeck==0.8.0b4
 pydub==0.25.1
+pyee==9.0.4
 Pygments==2.13.0
 Pympler==1.0.1
 pyparsing==3.0.9
@@ -113,6 +115,7 @@ stack-data==0.5.1
 streamlit==1.13.0
 sympy==1.11.1
 tabulate==0.9.0
+tenacity==8.1.0
 tensorboard==2.10.1
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
@@ -138,6 +141,7 @@ validators==0.20.0
 watchdog==2.1.9
 wcwidth==0.2.5
 Werkzeug==2.2.2
+win32-setctime==1.1.0
 wrapt==1.14.1
 youtube-dl==2021.12.17
 zipp==3.9.0
