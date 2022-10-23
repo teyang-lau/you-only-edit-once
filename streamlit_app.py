@@ -16,13 +16,10 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from src.utils.streamlit import save_uploaded_file, factors, get_all_files, make_grid
 from src.utils.yolox_process import video_predict
-from src.utils.scoring_frames import (
-    scores_over_all_frames,
-    filter_area_and_count,
-    filter_area,
-)
+from src.utils.scoring_frames import scores_over_all_frames, filter_area_and_count
 from src.utils.video_process import filter_video, add_audio
-from src.utils.beautify import get_top_n_idx
+from src.utils.plotting import streamgraph
+from src.utils.beautify import get_top_n_idx, beautify, check_filter
 from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
@@ -65,20 +62,17 @@ YOEO_CLASSES = (
 )
 __, col, __ = st.columns([1, 2, 1])
 with col:
-    st.image("./results/media/you-only-edit-once-logo.png")
+    st.image("./results/media/you-only-edit-once-ai-logo.png")
 
 ##STEP 1 Load Model
 with st.spinner(text="Loading Model ... Please be patient!"):
     model = load_model(MODEL_PATH)
 
-##STEP 2 Upload Video
-st.write("# Upload diving video:\n")
-
 with st.expander("How to Use YOEO"):
     instruct = """
     1. Upload a diving video 
     2. Select the flora & fauna you want to see in your video
-    3. (Optional): Adjust the advanced options for better fine-tuning
+    3. (Optional): Adjust advanced options for better fine-tuning and click "Submit Advanced Options"
     4. Click "Start Auto-Trimming" and let the magic begin! 
     """
     st.write(instruct)
@@ -87,6 +81,9 @@ with st.expander("How to Use YOEO"):
 # create temp dir for storing video and outputs
 temp_dir = tempfile.TemporaryDirectory()
 temp_path = temp_dir.name
+
+##STEP 2 Upload Video
+st.write("# Upload diving video:\n")
 
 video_file = st.file_uploader(
     "Choose a File", accept_multiple_files=False, type=["mp4", "mov"]
@@ -135,18 +132,44 @@ if video_file is not None:
                 help="Frames per sec to infer on. Smaller value means faster trimming but at the expense of performance!",
             )  # num of frames per sec to do inferencing
             strict_val = st.slider(
-                "Trimming Strictness", min_value=0, value=fps
+                "Trimming Strictness",
+                min_value=0,
+                max_value=int(fps * 3),
+                value=0,
+                help="Keep number of frames before an accepted frame to avoid objects from popping in instantly",
             )  # number of frames prior to keep if current frame is to be kept
             # sharpen = st.checkbox("Sharpen Video")
             # color_grade = st.checkbox("Color Grade Video")
             # audio = st.radio("Add Audio", ("No audio", "Default", "Youtube"), index=1)
-            audio = st.radio("Add Audio", ("No audio", "Default"), index=1)
+            audio = st.radio(
+                "Add Audio",
+                ("No audio", "Default"),
+                index=1,
+                help="Whether to add audio to the trimmed video. Default will add a music chosen by us!",
+            )
             # yt_link = st.text_input("Enter a Youtube Audio Link")
+
+            filter = st.radio(
+                "Add Filter",
+                ("No filter", "Hudson", "Stinson", "Others"),
+                index=2,
+                help="Whether to add filter to beautified images.\
+                    Choose Hudson for more saturation and Stinson for \
+                    less saturation. Alternatively enter your choice of filter.\
+                    Available Instagram filters: https://raw.githubusercontent.com/akiomik/pilgram/master/screenshots/screenshot.png",
+            )
+            other_filter = st.text_input("Other instagram filter")
 
             # Every form must have a submit button.
             submitted = st.form_submit_button("Submit Advanced Options")
             if submitted:
                 st.write("Optimization", ifps, "strict_val", strict_val)
+
+            # check other filter validity
+            if other_filter and filter == "Others":
+                check, error_msg = check_filter(other_filter)
+                if not check:
+                    st.error(error_msg)
 
     # start inferencing
     # background-color: #00cc00
@@ -196,9 +219,13 @@ if video_file is not None:
             os.remove(video_bbox_filename)
 
             # score frames
-            area_scores, count_scores, marine_mask = scores_over_all_frames(
-                bbox_class_score, marine_options, origi_shape
-            )
+            (
+                area_scores,
+                count_scores,
+                marine_mask,
+                species_detected,
+                species_count,
+            ) = scores_over_all_frames(bbox_class_score, marine_options, origi_shape)
             # filter scores for each frame
             filtered_scores, filtered_idx = filter_area_and_count(
                 area_scores,
@@ -214,7 +241,6 @@ if video_file is not None:
             beauti_idx = get_top_n_idx(
                 filtered_scores, filtered_idx, sampling_size=0.1, n=10
             )
-            # beauti_idx = np.random.choice(filtered_idx, size=6, replace=False)
             st.write("Proportion of filtered frames:", len(filtered_idx) / num_frames)
             st.write("Number of filtered frames:", len(filtered_idx))
 
@@ -228,7 +254,7 @@ if video_file is not None:
             )
             beauti_img = filter_video(
                 video_path, video_trimmed_filename, filtered_idx, beauti_idx
-            )
+            )  # beauti_img is now in order of appearance and not in terms of score
 
             # recode video and add audio
             audio_file = "./results/media/Retreat.mp3"
@@ -254,6 +280,16 @@ if video_file is not None:
                 )
             os.remove(video_trimmed_filename)
 
+        # beautify images
+        if other_filter and filter == "Others":
+            # filter = other_filter
+            beauti_img = beautify(beauti_img, filter=other_filter)
+        elif filter == "No filter":
+            # filter = None
+            beauti_img = beautify(beauti_img, filter=None)
+        else:
+            beauti_img = beautify(beauti_img, filter=filter)
+
         tab_od, tab_trim, tab_beauty = st.tabs(
             [
                 "YOEO's Object Detection Results",
@@ -265,11 +301,39 @@ if video_file is not None:
             st.subheader("YOEO's Object Detection Results:")
             st.video(video_bbox_recode_filename)
 
+            # metrics
             st.subheader("Flora & Fauna Detected: ")
-            col1, col2, col3 = st.columns(3)
-            col1.metric("# Species Detected", "2")
-            col2.metric("Turtle", "1")
-            col3.metric("Fish", "23")
+            st.markdown(
+                """
+                <style>
+                /*center metric label*/
+                [data-testid="stMetricLabel"] > div:nth-child(1) {
+                    justify-content: center; font-size: 18px;
+                }
+
+                /*center metric value*/
+                [data-testid="stMetricValue"] > div:nth-child(1) {
+                    justify-content: center;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            __, col, col1, __ = st.columns([1, 3, 3, 1])
+            col.metric("# Species Detected", len(species_detected))
+            # bbox per frame
+            col1.metric("Avg # Objects Per Frame", round(np.mean(count_scores)))
+            col0, col1, col2, col3, col4 = st.columns(5)
+            col0.metric("Fish", "Yes" if 2 in species_detected else None)
+            col1.metric("Coral", "Yes" if 1 in species_detected else None)
+            col2.metric("Turtle", "Yes" if 3 in species_detected else None)
+            col3.metric("Shark", "Yes" if 0 in species_detected else None)
+            col4.metric("Manta Ray", "Yes" if 4 in species_detected else None)
+
+            # streamgraph plot
+            with st.container():
+                fig = streamgraph(species_count)
+                st.pyplot(fig)
 
         with tab_trim:
             st.subheader("YOEO's Trimmed Video:")
@@ -283,18 +347,17 @@ if video_file is not None:
                 mygrid[idx // col][idx % col].image(img, channels="BGR")
 
         # remove recoded video to save space as it is not needed anymore
-        # REMOVE OTHER VIDEOS! REMEMBER TO DO SHUTIL RMTREE!!!
         os.remove(video_bbox_recode_filename)
         os.remove(video_trimmed_recode_filename)
 
-        allfiles = get_all_files(temp_path)
-        st.write(allfiles)
+        # allfiles = get_all_files(temp_path)
+        # st.write(allfiles)
 
 
 with st.expander("About YOEO"):
     __, col2, __ = st.columns([1, 1, 1])
     with col2:
-        st.image("./results/media/you-only-edit-once-logo.png")
+        st.image("./results/media/you-only-edit-once-ai-logo.png")
 
     about = """
     **[YOEO (You Only Edit Once)](https://github.com/teyang-lau/you-only-edit-once)** is an AI diving object detection model and diving 
