@@ -140,6 +140,19 @@ if video_file is not None:
             )  # number of frames prior to keep if current frame is to be kept
             # sharpen = st.checkbox("Sharpen Video")
             # color_grade = st.checkbox("Color Grade Video")
+
+            algo = st.radio(
+                "Trimming Algorithm",
+                ("Area", "Weighted Area & Count"),
+                index=1,
+                help="Algorithm for trimming the video based on object detection predictions.\
+                    Area only uses the proportion of frame covered by bounding boxes.\
+                    Weighted area & count additionally uses the counts of each detected species and\
+                    weight them by a rarity score.",
+            )
+            if algo == "Weighted Area & Count":
+                algo = "Area & Count"
+
             # audio = st.radio("Add Audio", ("No audio", "Default", "Youtube"), index=1)
             audio = st.radio(
                 "Add Audio",
@@ -237,6 +250,7 @@ if video_file is not None:
                 fps,
                 ifps,
                 num_frames,
+                algo=algo,
             )
             # get top n indices of frames with highest scores
             beauti_idx = get_top_n_idx(
