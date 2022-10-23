@@ -11,7 +11,7 @@
 </div>
 
 <p align="center">
-  <img src="results\media\you-only-edit-once-logo.png" width="300">
+  <img src="results\media\you-only-edit-once-ai-logo.png" width="300">
 </p>
 <br>
 
