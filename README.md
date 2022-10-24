@@ -19,7 +19,7 @@
   
 <div align="center">
   <p>
-    Check out <b><a href="https://you-only-edit-once.streamlitapp.com/">You Only Edit Once web application</a></b> hosted on streamlit!
+    Check out the <b><a href="https://you-only-edit-once.streamlitapp.com/">You Only Edit Once web application</a></b> hosted on streamlit!
   </p>
 </div>
 
