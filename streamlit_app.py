@@ -256,8 +256,8 @@ if video_file is not None:
             beauti_idx = get_top_n_idx(
                 filtered_scores, filtered_idx, sampling_size=0.1, n=10
             )
-            st.write("Proportion of filtered frames:", len(filtered_idx) / num_frames)
-            st.write("Number of filtered frames:", len(filtered_idx))
+            # st.write("Proportion of filtered frames:", len(filtered_idx) / num_frames)
+            # st.write("Number of filtered frames:", len(filtered_idx))
 
         with st.spinner(text="YOEO working its magic: Trimming ..."):
             # run through video and filter video
