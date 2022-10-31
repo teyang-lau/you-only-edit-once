@@ -30,12 +30,12 @@
 
 <br>
 
-## <div align="center">Object Detection Output</div>
+## <div align="center">Object Detection Output Example</div>
 https://user-images.githubusercontent.com/58768271/198932663-c15927b5-c111-4062-b5f3-126c31df4124.mp4
 
 <br>
 
-## <div align="center">Final Trimmed Video Example</div>
+## <div align="center">Final Trimmed Video Example (Turn on the audio!)</div>
 https://user-images.githubusercontent.com/58768271/198932745-926518b2-44e5-4f17-b627-a99fb8cb62e3.mp4
 
 <br>
