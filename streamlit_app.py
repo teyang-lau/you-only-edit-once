@@ -23,7 +23,7 @@ from src.utils.beautify import get_top_n_idx, beautify, check_filter
 from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
 
-@st.cache()
+@st.cache_resource()
 def load_model(ckpt_file, depth=0.33, width=0.25, num_classes=5):
     def init_yolo(M):
         for m in M.modules():
